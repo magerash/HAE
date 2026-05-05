@@ -42,8 +42,7 @@ Existing AI "twin" products (Personal.ai, Delphi, Replika) imitate *voice*. HAE 
 ├── profile/                      # PAEI + HEXACO + custom test results (gitignored)
 ├── tests/                        # questionnaire banks (committed)
 ├── agents/                       # hae-twin subagent spec
-├── skills/                       # /hae:* slash commands
-└── seeds/sessions/               # hand-written session prompt logs (bootstrap data)
+└── skills/                       # /hae:* slash commands
 ```
 
 ## Phases
@@ -108,14 +107,6 @@ Used by:
 - **Phase 3 classifier** — can skip records below a weight threshold to keep structured set lean
 - **Phase 4 twin few-shot** — retriever multiplies similarity score by `project_weight` so home-project exemplars dominate
 - **Phase 2 persona regen** — weighted aggregation prevents off-topic projects from skewing inferred decision style
-
-## Seed data
-
-`seeds/sessions/` holds hand-written session-prompt logs with timecodes + outcomes. Predates auto-capture. Phase 3 classifier ingests these as bootstrap training data so the twin has signal from day 1, not day 30.
-
-Currently 2 sessions:
-- `session-2026-05-04_v0.92_to_v0.93.1.md` (24 prompts, v0.92→v0.93.1 ship)
-- `session-2026-05-04_v0.92_training_launcher.md` (9 prompts, V2 training launcher)
 
 ## Personality stack
 

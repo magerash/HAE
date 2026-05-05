@@ -1,5 +1,5 @@
 # HAE - status dashboard
-# Tallies raw + structured records, profile completeness, backfill state, seeds, plugin enable.
+# Tallies raw + structured records, profile completeness, backfill state, plugin enable.
 # Single source of truth for /hae:status skill.
 
 $ErrorActionPreference = 'SilentlyContinue'
@@ -77,11 +77,6 @@ $bfState = $null
 if (Test-Path $bfStatePath) {
     try { $bfState = Get-Content $bfStatePath -Raw -Encoding UTF8 | ConvertFrom-Json } catch {}
 }
-
-# Seeds
-$seedsDir = "$haeRoot\seeds\sessions"
-$seedCount = 0
-if (Test-Path $seedsDir) { $seedCount = (Get-ChildItem $seedsDir -File | Measure-Object).Count }
 
 # Plugin enabled?
 $pluginEnabled = $false
@@ -166,8 +161,4 @@ if (-not $bfState) {
     $lines += "- sessions imported (lifetime): $($bfState.sessions_count)"
     $lines += "- records imported (lifetime): $($bfState.records_count)"
 }
-$lines += ''
-$lines += '### Seeds'
-$lines += "- $seedCount hand-written session log(s) in .hae/seeds/sessions/"
-
 $lines -join "`n" | Write-Host

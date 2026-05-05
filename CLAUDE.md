@@ -74,7 +74,6 @@ state/ (backfilled_sessions.json)  ->  backfill_history.ps1
 - **`skills/<name>/SKILL.md`** - one per slash command. Frontmatter: `name`, `description`. No `hae:` prefix in name (plugin auto-namespaces).
 - **`agents/<name>.md`** - subagent specs. Frontmatter: `name`, `description`, `model`, `tools`.
 - **`tests/`** - questionnaire banks (PAEI, HEXACO Brief, custom).
-- **`seeds/sessions/`** - hand-written session prompt logs (Phase 3 bootstrap data).
 - **`prompts/raw/`** - per-session JSONL files (gitignored).
 - **`prompts/structured/`** - Phase 3 classified output.
 - **`profile/`** - operator profile data (gitignored).

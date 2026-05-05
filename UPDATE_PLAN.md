@@ -63,7 +63,9 @@ Six phases. Each is non-destructive until Phase 4 (cutover). Stop at any boundar
 **Effort:** 30 min.
 
 - `git init C:\Projects\HAE`, branch `main`.
-- Robocopy `C:\Projects\My habits\.hae\` → `C:\Projects\HAE\` excluding `prompts\raw\*`, `prompts\structured\*`, `profile\*`, `state\*`, `*.hae-backup-*.json`. **Keep `seeds/sessions/`** — curated bootstrap training data for the classifier, belongs in dev repo.
+- Robocopy `C:\Projects\My habits\.hae\` → `C:\Projects\HAE\` excluding `prompts\*`, `profile\*`, `state\*`, `*.hae-backup-*.json`.
+- **Drop `seeds/`** entirely from dev repo (twin pre-flight 2026-05-06: scheduler-drop pattern; synthetic seeds risk classifier pollution). Habits-specific session files moved to `%USERPROFILE%\.hae\docs\internal-sessions\` as personal session memory.
+- Strip seeds references from `scripts/status.ps1`, `CLAUDE.md`, `README.md`. Keep CHANGELOG history intact.
 - Initial commit: `chore: import HAE plugin source from habits .hae`.
 - Add `C:\Projects\HAE\.gitignore`: `prompts/raw/*`, `prompts/structured/*`, `profile/*.json`, `profile/persona.md`, `profile/principles.md`, `state/`, `node_modules/`, `*.log`, `.vscode/`.
 - Old `C:\Projects\My habits\.hae\` left untouched.
