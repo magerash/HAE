@@ -1,0 +1,29 @@
+# HAE - operator-private data, IDE/build clutter, install artifacts
+# Source of truth for plugin code. Operator data lives in data dir (default %USERPROFILE%\.hae), NOT in repo.
+
+# Operator data (lives in data dir, not repo - belt-and-braces if accidentally created here)
+prompts/raw/
+prompts/structured/
+profile/*.json
+profile/persona.md
+profile/principles.md
+state/
+
+# Plugin install backups (per-machine artifacts)
+*.hae-backup-*.json
+
+# IDE / build clutter
+.vscode/
+.idea/
+*.log
+node_modules/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Allow placeholders so empty dirs survive in git
+!prompts/raw/.gitkeep
+!prompts/structured/.gitkeep
+!profile/.gitkeep
+!state/.gitkeep

@@ -1,0 +1,27 @@
+{
+  "_comment": "Auto-loaded by Claude Code when plugin enabled. ${CLAUDE_PLUGIN_ROOT} is injected at runtime as the plugin's install dir, so the same hooks.json works on any machine. -WindowStyle Hidden suppresses the brief window flash on each hook fire (Windows). -NonInteractive prevents prompt dialogs.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File \"${CLAUDE_PLUGIN_ROOT}/scripts/capture_prompt.ps1\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File \"${CLAUDE_PLUGIN_ROOT}/scripts/capture_response.ps1\""
+          }
+        ]
+      }
+    ]
+  }
+}

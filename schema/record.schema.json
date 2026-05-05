@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hae/record.schema.json",
+  "title": "HAE structured prompt record",
+  "type": "object",
+  "required": ["id", "ts", "raw_text", "category", "session_id"],
+  "properties": {
+    "id":            { "type": "string", "format": "uuid" },
+    "ts":            { "type": "string", "format": "date-time" },
+    "raw_text":      { "type": "string" },
+    "category": {
+      "type": "string",
+      "enum": ["FEATURE", "BUG", "RESEARCH", "RELEASE_OPS", "CODE_QA", "REFACTOR", "META", "PLANNING"]
+    },
+    "subcategory":   { "type": ["string", "null"] },
+    "intent_verbs":  { "type": "array", "items": { "type": "string" } },
+    "entities": {
+      "type": "object",
+      "properties": {
+        "files":    { "type": "array", "items": { "type": "string" } },
+        "features": { "type": "array", "items": { "type": "string" } },
+        "libs":     { "type": "array", "items": { "type": "string" } },
+        "agents":   { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "scope_signal": {
+      "type": "string",
+      "enum": ["trim", "hold", "expand", "unknown"],
+      "description": "Operator's bias on scope this turn"
+    },
+    "evidence_demand":          { "type": "integer", "minimum": 0, "maximum": 10 },
+    "risk_appetite":            { "type": "integer", "minimum": 0, "maximum": 10 },
+    "urgency":                  { "type": "string", "enum": ["low", "med", "high"] },
+    "decision_made":            { "type": ["string", "null"] },
+    "decision_rationale":       { "type": ["string", "null"] },
+    "outcome_ref":              { "type": ["string", "null"], "description": "commit sha, PR url, or null" },
+    "operator_overrode_agent":  { "type": "boolean", "description": "True when this prompt contradicts the prior agent proposal — highest signal field for twin training" },
+    "agent_proposal_summary":   { "type": ["string", "null"], "description": "Brief recap of what the agent suggested before the override" },
+    "tokens_in":                { "type": "integer", "minimum": 0 },
+    "session_id":               { "type": "string" },
+    "transcript_path":          { "type": ["string", "null"], "description": "Full transcript path; null when privacy.store_full_paths = false" },
+    "transcript_hash":          { "type": ["string", "null"], "description": "SHA-256(transcript_path lowercased) truncated to 16 hex chars" },
+    "transcript_tail":          { "type": ["string", "null"], "description": "Last N path segments of transcript_path (config.privacy.path_segments_kept)" },
+    "cwd":                      { "type": ["string", "null"], "description": "Full cwd; null when privacy.store_full_paths = false" },
+    "cwd_hash":                 { "type": ["string", "null"] },
+    "cwd_tail":                 { "type": ["string", "null"] },
+    "project":                  { "type": "string" },
+    "is_home_project":          { "type": "boolean", "description": "True when cwd lives under config.weighting.home_project_path" },
+    "project_weight":           { "type": "number", "minimum": 0, "maximum": 1, "description": "Training-time weight: home_weight for active dev project, other_weight (or per-project override) for drive-bys" },
+    "classifier_version":       { "type": ["string", "null"], "description": "Version of the classifier that produced this structured record" },
+    "persona_version":          { "type": ["string", "null"], "description": "Version of profile/persona.md active when this record was classified" },
+    "operator_decision_delta":  { "type": ["string", "null"], "description": "When operator overrode agent: short delta string capturing what changed (axis + direction)" },
+    "override_axis":            { "type": ["string", "null"], "enum": ["scope", "evidence", "risk", "approach", "priority", "scope+evidence", "scope+risk", "other", null], "description": "Which decision axis the operator overrode on" },
+    "retrieval_text":           { "type": ["string", "null"], "description": "Compact text used for embedding/retrieval; concatenation of category, decision, rationale" },
+    "embedding":                { "type": ["array", "null"], "items": { "type": "number" }, "description": "vector for retrieval; null if not yet computed" },
+    "redacted":                 { "type": "boolean", "default": false },
+    "hae_phase":                { "type": "integer" }
+  },
+  "additionalProperties": false
+}
