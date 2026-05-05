@@ -1,194 +1,127 @@
-# HAE — install guide
+# INSTALL
 
-Two install paths — **plugin install** (recommended; loads hooks + skills + agents) or **direct hooks only** (capture only, no skills).
-
-> **Notation:** `<haeRoot>` in commands below = absolute path to your `.hae/` directory (e.g. `C:\path\to\your-project\.hae`). The installers auto-detect this path from their own location, so you usually don't need to edit it. Substitute as needed for hand-typed commands.
-
-## Plugin install (one command)
-
-From the `.hae/` directory on any machine:
+## Quick start
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install_plugin.ps1
+# 1. Clone the dev repo
+git clone <hae-repo-url> C:\Projects\HAE
+
+# 2. Run installer (default: Copy to C:\Plugins\hae, data at %USERPROFILE%\.hae)
+powershell -File C:\Projects\HAE\scripts\install_plugin.ps1 -PersistEnv
+
+# 3. Restart Claude Code
 ```
 
-That script:
-- Auto-detects plugin path from its own location
-- Creates a local marketplace at `~/.claude/plugins/marketplaces/hae-local/`
-- Junctions the plugin source into the marketplace
-- Writes `marketplace.json`, registers in `known_marketplaces.json` + `installed_plugins.json`
-- Sets `enabledPlugins["hae@hae-local"] = true` in `~/.claude/settings.json`
-- Strips any legacy direct-hook entries (the plugin provides them)
-- Backs up every modified file with timestamped suffix
+That's it. Capture starts immediately on next prompt; data lands in `%USERPROFILE%\.hae\prompts\raw\`. From any project's Claude Code session.
 
-Optional flags:
+## What gets installed
+
+```
+~/.claude/plugins/marketplaces/hae-local/             marketplace registration
+                  └── plugins/hae/                     junction -> install path
+~/.claude/plugins/installed_plugins.json              hae@hae-local entry
+~/.claude/plugins/known_marketplaces.json             hae-local entry
+~/.claude/settings.json                                enabledPlugins.hae@hae-local: true
+                                                       statusLine.command (rewired to junction)
+
+C:\Plugins\hae\                                       plugin code (default install path)
+%USERPROFILE%\.hae\                                   operator data dir (cross-project)
+  ├── config.json                                     operator-private overrides
+  ├── prompts/raw/                                    captures from ALL projects
+  ├── prompts/structured/                             classifier output
+  ├── profile/                                        PAEI + HEXACO + custom + persona.md
+  └── state/                                          backfill + classifier state
+```
+
+## Installer options
 
 ```powershell
-# Different plugin location
-scripts\install_plugin.ps1 -PluginPath "D:\my-stuff\hae"
-
-# Different marketplace name (e.g. multiple HAE installs)
-scripts\install_plugin.ps1 -MarketplaceName hae-personal
-
-# Uninstall (removes marketplace + entries; keeps your data in prompts/ and profile/)
-scripts\install_plugin.ps1 -Uninstall
+powershell -File C:\Projects\HAE\scripts\install_plugin.ps1 `
+  [-PluginPath <source-dir>]      `   # default: parent of scripts/
+  [-CopyTo <install-target>]      `   # default: C:\Plugins\hae
+  [-DataDir <data-root>]          `   # default: %USERPROFILE%\.hae
+  [-Mode Copy|Junction]           `   # default: Copy. Junction = live dev
+  [-PersistEnv]                       # writes HAE_DATA_DIR to user-scope env
 ```
 
-### Verify
+`Copy` mode (default) robocopies dev -> install path, junctions marketplace at install path. Reinstall to update.
 
-In Claude Code:
+`Junction` mode skips the copy step; marketplace junction -> dev repo. Edits in dev are immediately live. Use for plugin development; not recommended for stable use.
+
+`-DataDir` lets you put captures + profile + state on a different drive. The installer creates the dir if absent and copies `config.user.example.json` -> `<DataDir>/config.json` only on first run (preserves existing operator config).
+
+## Configure homes
+
+After install, tag the projects you actively work on so capture weights them at 1.0:
+
 ```
-/reload-plugins              # should report: 1 plugin · 7 skills · 1 agent · 2 hooks
-/plugin list                 # should show hae@hae-local enabled
-```
-
-Type `/hae:` — completion should offer `/hae:profile` `/hae:status` `/hae:home` `/hae:backfill` `/hae:consolidate` `/hae:classify` `/hae:twin`.
-
-If `/reload-plugins` reports 0, fully restart Claude Code (some versions only read the marketplace registry at boot).
-
-### Why a local marketplace
-
-Claude Code only loads plugins via the marketplace registry — there's no "raw filesystem path" install mechanism. For dev without publishing to GitHub, we register a fake local marketplace. The plugin source stays in your repo (junctioned, not copied), so edits flow through instantly. After SKILL.md / hook edits, run `/reload-plugins`.
-
----
-
-## Legacy: direct hooks only (capture, no skills)
-
-If you don't want plugin install, you can wire just the capture hooks via `scripts/install_hooks.ps1`. Skills + the twin agent will NOT be loaded.
-
-### Prerequisites for direct-hooks-only install
-
-## Prerequisites
-
-- Windows + PowerShell (5.1 built-in OR PowerShell 7+ `pwsh`). Installer auto-detects and prefers `pwsh` if available.
-- Claude Code installed; `~/.claude/settings.json` exists
-- `.hae/` checked out at `<haeRoot>` (any project path)
-
-## Step 1 — review config
-
-Open `.hae/config.json` and verify:
-
-- `capture.enabled` — leave `false` for now (you flip this in Step 4)
-- `capture.include_response` — set `true` only if you want Stop hook to capture assistant responses (more disk + privacy surface)
-- `capture.redact_patterns` — extend if you have project-specific secrets
-- `capture.max_prompt_chars` — default 50 000 fits most prompts
-
-## Step 2 — install global hooks
-
-```powershell
-powershell "<haeRoot>\scripts\install_hooks.ps1"
+/hae:home add C:\Projects\my-app
+/hae:home add C:\Projects\other-app
+/hae:home list
 ```
 
-(or `pwsh` if you have PowerShell 7)
+Or auto-detect after a week of capture:
 
-What this does:
-1. Backs up `~/.claude/settings.json` to `settings.json.hae-backup-<timestamp>.json`
-2. Adds two hook entries (`UserPromptSubmit`, `Stop`) tagged `_hae_managed: true`
-3. Each hook calls a script in this repo via absolute path
-
-**Idempotent**: re-running replaces the HAE entries, leaves your other hooks untouched.
-
-## Step 3 — restart Claude Code (REQUIRED)
-
-Hooks are loaded into memory when a Claude Code session starts. Sessions running at install time will NOT pick up the new hooks until restarted. Close all sessions and open a new one before testing.
-
-To verify a fresh session has hooks loaded: type any prompt, then check `.hae/prompts/spool/` — a `p-*.jsonl` file should appear within seconds.
-
-## Step 4 — flip the switch
-
-Edit `.hae/config.json`:
-
-```json
-"capture": { "enabled": true, ... }
+```
+/hae:home auto-detect -Apply
 ```
 
-No restart needed — scripts re-read config on every hook fire.
+Homes live in `<DataDir>/config.json`. Other projects get `weighting.other_weight` (default 0.3).
 
-## Step 5 — verify
+## Profile
 
-Type any prompt in any Claude Code session, then:
+Run the questionnaire to seed the twin agent:
 
-```powershell
-Get-Content "<haeRoot>\prompts\raw\$(Get-Date -Format 'yyyy-MM-dd').jsonl" -Tail 1
+```
+/hae:profile
 ```
 
-You should see your prompt as a single JSON line.
+~10 minutes: PAEI 30Q + HEXACO Brief 24Q + Custom 8Q + free-form principles. Files written to `<DataDir>/profile/`.
 
-## Step 5b — set home projects (recommended)
+## Backfill (optional)
 
-`weighting.homes` is empty by default. Until you populate it, every captured record gets `other_weight` (0.3) — flat signal. Two options:
+Import historical Claude Code session transcripts:
 
-**A. Manual** — if you already know the project paths:
-
-```powershell
-powershell "<haeRoot>\scripts\manage_homes.ps1" add "<your-project-path>"
+```
+/hae:backfill
 ```
 
-Or invoke `/hae:home add <your-project-path>` from a Claude Code session.
+Reads `~/.claude/projects/`, applies same redaction + weighting + path-PII pipeline as live capture. Idempotent.
 
-**B. Auto-detect** — after capturing some records (or running backfill), let HAE find top-volume projects:
+## Verify
 
-```powershell
-powershell "<haeRoot>\scripts\manage_homes.ps1" auto-detect             # preview
-powershell "<haeRoot>\scripts\manage_homes.ps1" auto-detect -Apply      # apply
+```
+/plugin list                # hae@hae-local enabled
+/reload-plugins             # 0 errors
+/hae:status                 # capture stats
+/hae:twin "test"            # twin take (if persona built)
 ```
 
-Or `/hae:home auto-detect -Apply` from a session.
-
-## Step 6 — (optional) backfill from existing history
-
-If you want the twin to learn from your past Claude Code sessions instead of starting cold, run a one-shot backfill of `~/.claude/projects/` transcripts:
-
-```powershell
-# Preview first
-powershell "<haeRoot>\scripts\backfill_history.ps1" -DryRun
-
-# Real run
-powershell "<haeRoot>\scripts\backfill_history.ps1"
-```
-
-Or invoke `/hae:backfill` from a Claude Code session. It's idempotent — tracks processed sessions in `.hae/state/backfilled_sessions.json` and skips them next time. Skip this step entirely if you'd rather only capture forward.
+Type any prompt -> record at `%USERPROFILE%\.hae\prompts\raw\<date>__<sid8>.jsonl` within 1s.
 
 ## Uninstall
 
 ```powershell
-powershell "<haeRoot>\scripts\install_hooks.ps1" -Uninstall
+powershell -File C:\Projects\HAE\scripts\install_plugin.ps1 -Uninstall
 ```
 
-To purge all captured data:
+Removes junction + registry entries. **Data dir preserved** (operator data survives).
 
-```powershell
-Remove-Item -Recurse -Force "<haeRoot>\prompts\raw\*"
-Remove-Item -Recurse -Force "<haeRoot>\state"
-```
+## Migrating from in-project layout
 
-Removes only `_hae_managed: true` entries from `~/.claude/settings.json`.
+If you previously had `.hae/` inside a host project, see [MIGRATION.md](MIGRATION.md).
 
-## Background processes (what runs in your dock / process viewer)
+## Privacy
 
-HAE spawns short-lived processes at three trigger points. All use `-WindowStyle Hidden` and `-NonInteractive` so no console window flashes.
-
-| Trigger | Process | Lifetime |
-|---------|---------|----------|
-| User types prompt | `powershell capture_prompt.ps1` | sub-50ms |
-| Assistant finishes turn | `powershell capture_response.ps1` (only if `capture.include_response = true`) | sub-50ms |
-| Statusline render | `powershell statusline_universal.ps1` (dot-sources `statusline.ps1` in-process) | ~100-300ms |
-| Statusline render (if wrapping OMC/another HUD) | `cmd /c <prev-command>` invoked by wrapper | varies (e.g. `node omc-hud.mjs` ~200ms) |
-
-**Total per render** with OMC wrapping: 1 PowerShell process (HAE) + 1 cmd shim + 1 child for the wrapped HUD (e.g. node). Without wrapping: just 1 PowerShell. All headless.
-
-If you still see persistent processes:
-- Check Task Manager for stuck `powershell.exe` instances. HAE scripts always exit on completion (no daemon, no listener).
-- The OMC `node` is OMC's own child, not HAE.
-- Hooks fire ONLY on prompt-submit / turn-end, not continuously.
-
-**Why PowerShell at all (vs node like OMC):** zero install dependency on Windows. Built-in `[System.Diagnostics.Process]`, JSON parser, regex, file I/O — no external runtime needed for an open-source plugin install.
+- Hooks redact secrets before write (PAT, API key, JWT, PEM, DB URL, email, generic password/token assignments).
+- Path-PII: `privacy.store_full_paths` defaults false -> cwd hashed + last 2 segments kept.
+- All data dirs gitignored from this repo. Operator data NEVER committed.
+- Capture failures swallow exceptions silently — never blocks Claude Code.
 
 ## Troubleshooting
 
-| Symptom | Fix |
-|---------|-----|
-| No raw file appears after prompt | Check `~/.claude/settings.json` actually has the hook entries; verify `capture.enabled = true`; verify `pwsh` runs from a fresh shell |
-| Claude Code seems slower | Hooks are async-fire-and-forget but Bash/pwsh spawn cost is non-zero. Set `include_response = false` to halve the load. |
-| Sensitive content in raw log | `prompts/raw/` is gitignored. Add a redact pattern to `config.json`, run `scripts/redact_existing.ps1` (Phase 1 — not yet shipped). |
-| Hook fails silently | Capture scripts swallow errors by design (must never block Claude Code). Check `$haeRoot\prompts\raw\` exists; check pwsh version `pwsh --version` ≥ 7. |
+- **Plugin not loading after install:** restart Claude Code (registry + statusline need fresh process).
+- **No records writing:** verify `$env:HAE_DATA_DIR` set; check `<DataDir>/prompts/raw/` exists; verify `config.default.json` `capture.enabled = true`.
+- **Statusline missing:** check `~/.claude/settings.json` `statusLine.command`; should point at marketplace junction `/scripts/statusline_universal.ps1`.
+- **Twin says "low confidence":** profile not built or persona thin. Run `/hae:profile`.
+- **`/hae:twin` hangs:** classifier pool too large for `-JsonOutput` mode. Always use markdown mode (default) — never call `twin.ps1 -JsonOutput`.
