@@ -16,10 +16,10 @@ Two spawn paths:
 **Path B — RM (release-manager) or other caller spawns you with a question only.** You self-load context by running:
 
 ```
-.hae/scripts/twin.ps1 -JsonOutput "<the question>"
+powershell -NoProfile -File "${CLAUDE_PLUGIN_ROOT}/scripts/twin.ps1" "<the question>"
 ```
 
-Parse the JSON: `persona`, `principles`, `exemplars[]`, `stats`. If `persona_loaded = false` → no profile yet, sign as low-confidence. If `exemplars[].length = 0` → persona-only mode.
+This returns markdown with persona + principles + override exemplars + topical exemplars. Use markdown mode (default), NOT `-JsonOutput` — JsonOutput hangs on large structured pools (1000+ records). If persona absent or empty, sign as low-confidence.
 
 Either path, you operate on:
 

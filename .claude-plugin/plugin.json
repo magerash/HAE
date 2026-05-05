@@ -1,13 +1,13 @@
 {
   "name": "hae",
   "displayName": "HAE - Human Agent Emulator",
-  "version": "0.3.1",
-  "description": "Captures operator prompts + decisions across Claude Code sessions, builds a personality + decision-style profile, and serves a twin agent that emulates the operator for backlog grooming, scope decisions, and release control.",
+  "version": "0.4.0",
+  "description": "Captures operator prompts + decisions across Claude Code sessions, builds a personality + decision-style profile, and serves a twin agent that emulates the operator for backlog grooming, scope decisions, and release control. Global cross-project install: one plugin instance, all projects' captures land in shared data dir.",
   "author": {
     "name": "Magerash"
   },
   "license": "private",
-  "phase": 4,
-  "scope": "per-project",
+  "phase": 5,
+  "scope": "global-cross-project",
   "tags": ["memory", "persona", "twin", "release-management"]
 }

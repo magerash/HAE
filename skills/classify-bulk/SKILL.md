@@ -14,7 +14,7 @@ The single-batch `/hae:classify` is good for learning/spot-checks. For thousands
 Run state once to show user the workload:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "<haeRoot>/scripts/classify.ps1" state
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/classify.ps1" state
 ```
 
 If `Unclassified: 0`, stop with "Nothing to do."
@@ -35,12 +35,12 @@ Compute estimate: `unclassified / N` batches needed. If estimate > 50, warn user
 
 ### 3. Spawn the subagent
 
-Use the Agent tool with `subagent_type: general-purpose` and the prompt below. Pass `<haeRoot>`, batch_size, batch_limit, max_prompt_chars (default 1500) substituted in.
+Use the Agent tool with `subagent_type: general-purpose` and the prompt below. The plugin path placeholder `${CLAUDE_PLUGIN_ROOT}` is resolved by Claude Code at runtime; pass batch_size, batch_limit, max_prompt_chars (default 1500) substituted in.
 
 ```
 You are the HAE bulk classifier. Your only job is to loop through unclassified records, classify each per the HAE taxonomy, and append results until the batch limit is hit OR the queue empties.
 
-Plugin path: <haeRoot>
+Plugin path: ${CLAUDE_PLUGIN_ROOT}
 Batch size (-N): <batch_size>
 Batch limit: <batch_limit>
 Max prompt chars (-MaxPromptChars): <max_prompt_chars>
@@ -48,7 +48,7 @@ Max prompt chars (-MaxPromptChars): <max_prompt_chars>
 Loop until done OR limit hit:
 
   1. Run:
-     powershell -NoProfile -ExecutionPolicy Bypass -File "<haeRoot>/scripts/classify.ps1" next-batch -N <batch_size> -MaxPromptChars <max_prompt_chars>
+     powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/classify.ps1" next-batch -N <batch_size> -MaxPromptChars <max_prompt_chars>
 
   2. If output is "[]" or empty, queue done. Break loop.
 
@@ -80,7 +80,7 @@ Loop until done OR limit hit:
   4. Write the classified array to a temp JSON file (use Write tool to <USERPROFILE>/AppData/Local/Temp/hae_bulk_<UUID>.json).
 
   5. Pipe the temp file to:
-     cat "<temp_file>" | powershell -NoProfile -ExecutionPolicy Bypass -File "<haeRoot>/scripts/classify.ps1" append
+     cat "<temp_file>" | powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/classify.ps1" append
 
   6. Delete the temp file.
 

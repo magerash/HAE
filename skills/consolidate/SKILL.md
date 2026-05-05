@@ -9,7 +9,7 @@ Per-session files are first-class storage. This skill produces a combined dated 
 
 ## Procedure
 
-1. Run: `powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Projects\My habits\.hae\scripts\consolidate.ps1"`
+1. Run: `powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/consolidate.ps1"`
 2. (Optional) `-Cleanup` flag deletes per-session sources after successful merge — only suggest if user asks for it
 3. (Optional) `-Date 2026-05-04` flag limits to one day
 4. Capture output (per-day appended counts + total)

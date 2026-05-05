@@ -7,14 +7,14 @@ description: Classify raw HAE records into structured taxonomy (FEATURE/BUG/RESE
 
 Classifies one batch of unclassified raw records per invocation. The user's Claude Code model (you) does the actual classification; the helper script handles I/O + state.
 
-`<haeRoot>` = `C:\Users\Magerash\.claude\plugins\marketplaces\hae-local\plugins\hae` (plugin install path) OR `C:\Projects\My habits\.hae` (dev path).
+`${CLAUDE_PLUGIN_ROOT}` is resolved by Claude Code at runtime to the plugin install dir. Data lives in `$env:HAE_DATA_DIR` (default `%USERPROFILE%\.hae`); scripts handle paths.
 
 ## Procedure
 
 ### 1. Check state
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "<haeRoot>/scripts/classify.ps1" state
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/classify.ps1" state
 ```
 
 Surface the counts. If `Unclassified: 0`, tell user "All classified. Nothing to do." and stop.
@@ -22,7 +22,7 @@ Surface the counts. If `Unclassified: 0`, tell user "All classified. Nothing to 
 ### 2. Get next batch
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "<haeRoot>/scripts/classify.ps1" next-batch -N 20
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/classify.ps1" next-batch -N 20
 ```
 
 Captures JSON array. Each record has: `id, ts, session_id, project, is_home_project, project_weight, source, event, prompt`. (Stop-event records are auto-skipped + marked done.)
@@ -63,7 +63,7 @@ For EACH record in the batch, build a structured object that:
 Pipe the classified JSON array to:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "<haeRoot>/scripts/classify.ps1" append
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/classify.ps1" append
 ```
 
 Script writes to `prompts/structured/<YYYY-MM>.jsonl` (one file per UTC month) and ALSO appends override records to `prompts/structured/overrides.jsonl` (high-signal exemplars for twin training).

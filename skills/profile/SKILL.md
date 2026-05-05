@@ -1,6 +1,6 @@
 ---
 name: profile
-description: Run the HAE personality + decision-style questionnaires (PAEI 30Q + HEXACO Brief 24Q + Custom 8Q + free-form principles), score the responses, persist to .hae/profile/, and regenerate persona.md. Use when user invokes /hae:profile, asks to "set up HAE profile", "run HAE questionnaire", or "build my operator profile".
+description: Run the HAE personality + decision-style questionnaires (PAEI 30Q + HEXACO Brief 24Q + Custom 8Q + free-form principles), score the responses, persist to <dataRoot>/profile/, and regenerate persona.md. Use when user invokes /hae:profile, asks to "set up HAE profile", "run HAE questionnaire", or "build my operator profile".
 ---
 
 # /hae:profile — operator profile builder
@@ -9,16 +9,18 @@ You are running the HAE profile questionnaire. Your job is to take the user thro
 
 ## Inputs (read these files before starting)
 
-1. `.hae/tests/paei.md` — 30-item PAEI inventory
-2. `.hae/tests/hexaco_brief.md` — 24-item HEXACO Brief
-3. `.hae/tests/custom_decision.md` — 8-item custom decision-style inventory + free-form principles prompt
-4. `.hae/config.json` — for any profile-related flags
+1. `${CLAUDE_PLUGIN_ROOT}/tests/paei.md` — 30-item PAEI inventory
+2. `${CLAUDE_PLUGIN_ROOT}/tests/hexaco_brief.md` — 24-item HEXACO Brief
+3. `${CLAUDE_PLUGIN_ROOT}/tests/custom_decision.md` — 8-item custom decision-style inventory + free-form principles prompt
+4. `${CLAUDE_PLUGIN_ROOT}/config.default.json` — for any profile-related flags
+
+Profile output is written to `<dataRoot>/profile/` (default `%USERPROFILE%\.hae\profile\`).
 
 ## Procedure
 
 ### Phase 1 — confirm intent
 
-Tell the user: "Profile takes ~10 minutes total: PAEI (30 items, 1–7 scale, ~5 min), HEXACO Brief (24 items, 1–5 scale, ~3 min), Custom decision-style (8 items, 1–7 anchored, ~2 min), then 3–8 free-form principles you operate by." Ask if they want to do all four now, just one, or resume an in-progress profile (check if any of `profile/paei.json`, `profile/hexaco.json`, `profile/custom.json` already exist).
+Tell the user: "Profile takes ~10 minutes total: PAEI (30 items, 1–7 scale, ~5 min), HEXACO Brief (24 items, 1–5 scale, ~3 min), Custom decision-style (8 items, 1–7 anchored, ~2 min), then 3–8 free-form principles you operate by." Ask if they want to do all four now, just one, or resume an in-progress profile (check if any of `<dataRoot>/profile/paei.json`, `<dataRoot>/profile/hexaco.json`, `<dataRoot>/profile/custom.json` already exist).
 
 ### Phase 2 — administer each instrument (AskUserQuestion per item)
 
@@ -63,7 +65,7 @@ After all items in an instrument are collected:
 - **HEXACO:** invert reverse-keyed items, average per factor, classify high (≥3.75) / low (≤2.25)
 - **Custom:** no scoring transform; persist as-is. Generate a one-sentence `summary` synthesizing the 8 ratings into an operator descriptor
 
-Write each instrument's results to its respective `profile/*.json` file (UTF-8, no BOM, pretty-printed).
+Write each instrument's results to its respective `<dataRoot>/profile/*.json` file (UTF-8, no BOM, pretty-printed).
 
 ### Phase 4 — free-form principles
 
@@ -71,7 +73,7 @@ Principles are TEXT, not multiple-choice. Use a regular text prompt (not AskUser
 
 > "Write 3-8 short principles you operate by, in your own voice. One per line. Examples: 'always run codex review before shipping', 'mockups before code', 'ship dev channel before debug'."
 
-Wait for the user's free-text response. Save verbatim to `profile/principles.md` exactly as typed (one line per principle, no editorial reformatting).
+Wait for the user's free-text response. Save verbatim to `<dataRoot>/profile/principles.md` exactly as typed (one line per principle, no editorial reformatting).
 
 ### Phase 5 — generate persona.md
 
@@ -108,7 +110,7 @@ Synthesize PAEI scores + HEXACO highs/lows + Custom summary + Principles into a 
 <verbatim from principles.md>
 ```
 
-Save to `profile/persona.md`.
+Save to `<dataRoot>/profile/persona.md`.
 
 ### Phase 6 — confirm + offer next step
 
@@ -118,7 +120,7 @@ Tell user: "Profile done. Files written: <list>. Run `/hae:twin` to invoke an ag
 
 - Don't reveal item answer keys before scoring (no "this item probes Conscientiousness, reverse-keyed")
 - Don't editorialize on the user's answers ("interesting choice" — skip it)
-- Don't auto-share or commit `profile/*.json` — they're gitignored on purpose
+- Don't auto-share or commit `<dataRoot>/profile/*.json` — they're gitignored on purpose
 - Don't proceed past Phase 1 without explicit user confirmation per instrument
 - Don't use AskUserQuestion for Phase 4 (principles are free-text, not multiple-choice)
 - Don't combine multiple items into one AskUserQuestion call — one item per fire so progress is visible

@@ -7,8 +7,8 @@ description: Manage HAE home-project list (config.weighting.homes). List current
 
 `weighting.homes` controls which projects get `home_weight` (1.0) vs `other_weight` (0.3) per captured record. List entries can be:
 
-- **Path prefix** — e.g. `C:\Projects\My habits` — matches any cwd starting with this
-- **Bare basename** — e.g. `My habits` — matches any cwd whose `Split-Path -Leaf` equals this
+- **Path prefix** — e.g. `C:\Projects\my-app` — matches any cwd starting with this
+- **Bare basename** — e.g. `my-app` — matches any cwd whose `Split-Path -Leaf` equals this
 
 Empty homes list = nothing is home, all records get `other_weight`. That's a valid configuration but means flat training signal — not recommended once you have an active dev project.
 
@@ -27,7 +27,7 @@ Parse the user's intent into a subcommand:
 Run:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "<haeRoot>\scripts\manage_homes.ps1" <subcommand> [args]
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/manage_homes.ps1" <subcommand> [args]
 ```
 
 For `add`, accept either a full path (use as-is) OR a bare project name. If the user gives just a name and ambiguity exists in their captured projects, surface the matching cwds and ask which.
@@ -43,7 +43,7 @@ Mirror the script's stdout; don't reformat. Examples:
 
 ```
 Current homes (2):
-  - C:\Projects\My habits  [path]
+  - C:\Projects\my-app  [path]
   - dotfiles  [name]
 
 Weights: home=1  other=0.3
@@ -54,8 +54,8 @@ Auto-detect — projects with >= 100 records, top 3:
 
 project       cwd                              records sessions
 -------       ---                              ------- --------
-My habits     C:\Projects\My habits            1287    23
-dotfiles      C:\Users\Magerash\dotfiles       412     8
+my-app       C:\Projects\my-app            1287    23
+dotfiles      C:\Users\you\dotfiles       412     8
 sandbox       C:\Projects\sandbox              156     5
 
 Re-run with -Apply to add the above to weighting.homes.
@@ -63,7 +63,7 @@ Re-run with -Apply to add the above to weighting.homes.
 
 ## Config takes effect immediately
 
-Capture scripts re-read `config.json` on every hook fire. No Claude Code restart needed after `/hae:home` writes the config.
+Homes list lives in operator user config at `<dataRoot>/config.json` (default `%USERPROFILE%\.hae\config.json`). Capture scripts re-read merged config (defaults + user) on every hook fire. No Claude Code restart needed after `/hae:home` writes the user config.
 
 ## Don't
 

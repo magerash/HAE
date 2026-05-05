@@ -18,7 +18,7 @@ Parse user intent into a subcommand:
 |-----------|--------|
 | "preview", "show" | Run `scripts/statusline.ps1` and print output |
 | "preview wrapper", "show with omc" | Run `scripts/statusline_with_omc.ps1` and print output |
-| "install standalone", "use HAE only" | Set settings.json statusLine.command to `powershell -NoProfile -ExecutionPolicy Bypass -File "<plugin>/scripts/statusline.ps1"` |
+| "install standalone", "use HAE only" | Set settings.json statusLine.command to `powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/statusline.ps1"` |
 | "install wrapper", "compose with omc", "use both" | Set to `statusline_with_omc.ps1` (assumes OMC HUD at `~/.claude/hud/omc-hud.mjs`) |
 | "restore", "revert" | Find latest `~/.claude/settings.json.hae-backup-*.json` whose statusLine differs and restore that statusLine value |
 | "uninstall" | Remove statusLine entry entirely |

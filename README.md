@@ -1,10 +1,10 @@
-# `.hae` — Human Agent Emulator
+# HAE — Human Agent Emulator
 
 Plugin that captures operator prompts + decisions across Claude Code sessions, builds a personality + decision-style profile of the operator, and serves a twin agent that emulates the operator for backlog grooming, scope decisions, and release control.
 
 ## Status
 
-**v0.3.0 — Phases 0-4 done.** Capture live, classifier shipped (1670 records / 75 overrides), full operator profile captured (PAEI 30Q + HEXACO Brief 24Q + Custom 8Q + 6 principles + persona.md), twin agent answering at medium-high confidence. Only Phase 5 (release-manager loop integration) remains.
+**v0.4.0 — Phases 0-4 done, Phase 5 in progress.** Capture live, classifier shipped, full operator profile, twin agent answering at medium-high confidence. v0.4.0 splits the plugin into its own dev repo with global cross-project install + shared data directory.
 
 ## Why
 
@@ -12,37 +12,51 @@ Existing AI "twin" products (Personal.ai, Delphi, Replika) imitate *voice*. HAE 
 
 ## Layout
 
+**Plugin source (this repo, e.g. `C:\Projects\HAE\`):**
+
 ```
-.hae/
+HAE/
 ├── .claude-plugin/plugin.json    # plugin manifest
-├── README.md                     # this file
-├── INSTALL.md                    # one-time setup guide
-├── config.json                   # capture flags, redact rules, taxonomy
-├── .gitignore                    # protects raw prompts + profile from commits
-├── hooks/hooks.json              # template hook bindings (not auto-loaded)
+├── README.md
+├── INSTALL.md                    # install guide (Copy mode default, Junction for dev)
+├── CHANGELOG.md
+├── CLAUDE.md                     # AI instructions for working in this repo
+├── config.default.json           # universal defaults (committed): capture, redact, classifier, twin gates
+├── config.user.example.json      # template for operator-private user config
+├── .gitignore
+├── hooks/hooks.json              # hook bindings using ${CLAUDE_PLUGIN_ROOT}
 ├── scripts/
+│   ├── _lib.ps1                  # shared helper (Resolve-HaeDataRoot, Get-HaeConfig, etc)
 │   ├── capture_prompt.ps1        # UserPromptSubmit hook
 │   ├── capture_response.ps1      # Stop hook
-│   ├── classify.ps1              # Phase 3 classifier (state/next-batch/append)
+│   ├── classify.ps1              # Phase 3 classifier
 │   ├── twin.ps1                  # Phase 4 twin context composer
-│   ├── consolidate.ps1           # daily merge of per-session files
-│   ├── backfill_history.ps1      # one-shot historical import
-│   ├── manage_homes.ps1          # weighting.homes editor
-│   ├── status.ps1                # /hae:status dashboard
-│   ├── statusline.ps1            # multi-row statusline segment
-│   ├── statusline_universal.ps1  # composes with OMC/gstack/any prior statusLine
-│   ├── install_statusline.ps1    # statusline installer/uninstaller
-│   ├── report.ps1                # operator behavioral report generator
-│   ├── install_plugin.ps1        # one-command plugin install via local marketplace
-│   └── install_hooks.ps1         # legacy direct-hook installer (capture only, no skills)
-├── schema/record.schema.json     # JSON Schema for structured records
-├── prompts/
-│   ├── raw/                      # JSONL append-log per UTC-day (gitignored)
-│   └── structured/               # categorized, scored records (committable)
-├── profile/                      # PAEI + HEXACO + custom test results (gitignored)
+│   ├── consolidate.ps1
+│   ├── backfill_history.ps1
+│   ├── manage_homes.ps1          # writes to user config in data dir
+│   ├── status.ps1
+│   ├── statusline.ps1
+│   ├── statusline_universal.ps1
+│   ├── install_statusline.ps1
+│   ├── report.ps1
+│   ├── install_plugin.ps1        # one-command install via local marketplace + Copy mode
+│   └── install_hooks.ps1         # legacy direct-hook installer
+├── schema/record.schema.json
 ├── tests/                        # questionnaire banks (committed)
-├── agents/                       # hae-twin subagent spec
+├── agents/hae-twin.md            # subagent spec
 └── skills/                       # /hae:* slash commands
+```
+
+**Operator data dir (default `%USERPROFILE%\.hae\`, override via `$env:HAE_DATA_DIR`):**
+
+```
+%USERPROFILE%\.hae\
+├── config.json                   # operator-private overrides (homes, project_overrides, statusline.previous_command)
+├── prompts/raw/                  # JSONL captures from ALL projects (gitignored from any repo)
+├── prompts/structured/           # classifier output
+├── profile/                      # PAEI + HEXACO + custom + persona.md
+├── state/                        # backfill tracking, classifier state
+└── docs/internal-sessions/       # optional: hand-written session logs (operator's own memory)
 ```
 
 ## Phases
@@ -54,11 +68,11 @@ Existing AI "twin" products (Personal.ai, Delphi, Replika) imitate *voice*. HAE 
 | 2 | Profile: PAEI 30Q + HEXACO Brief 24Q + Custom 8Q + free-form principles + auto-generated `persona.md`. Captured via AskUserQuestion 4-bucket Likert flow + parallel batching. Behavioral calibration validated against captured records | ✅ done v0.3.0 |
 | 3 | Classifier: raw → structured 8-cat taxonomy + scope_signal + evidence_demand + risk_appetite + override delta detection. Auto-classifier handles 5 system patterns inline (40-55% LLM-cycle savings). `/hae:classify` single-batch + `/hae:classify-bulk` subagent loop. 1670 records classified, 75 override exemplars captured | ✅ done v0.2.0 |
 | 4 | `hae-twin`: `scripts/twin.ps1` context composer loads persona + principles + override exemplars (baseline-boosted) + topical exemplars (keyword × project_weight ranked). `/hae:twin` answers in Twin-take / Why / Risk / Confidence format. Validated A/B with same V1-month-view question and 18 vs 75 override pools | ✅ done v0.2.0 |
-| 5 | Plug `hae-twin` into release-manager loop as operator surrogate (RICE votes, scope picks, codex-review gates) | ⏳ pending |
+| 5 | Plug `hae-twin` into release-manager loop as operator surrogate (RICE votes, scope picks, codex-review gates) + split plugin into own repo + global cross-project install + config split | 🔄 in progress v0.4.0 |
 
 ## Scope progression
 
-**Per-project first** — install `.hae/` inside any active project directory. Once stable, promote scripts/skills/agents to `~/.claude/plugins/hae/` for global use.
+**Global cross-project install (v0.4.0+).** Plugin lives once at install path (default `C:\Plugins\hae`). Captures from every project's Claude Code session funnel into a single shared data directory. Records carry `project` + `is_home_project` + `project_weight` fields so the classifier and twin can weight home work over drive-by sessions.
 
 ## Capture mechanics
 

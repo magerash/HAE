@@ -1,6 +1,6 @@
 ---
 name: backfill
-description: One-shot import of historical Claude Code session transcripts into HAE raw store. Optional. Walks ~/.claude/projects/, extracts user prompts + (optionally) assistant responses, applies same redaction/weighting/PII pipeline as live capture. Idempotent — tracks processed sessions in .hae/state/backfilled_sessions.json. Use when user invokes /hae:backfill, asks "import history", "backfill HAE", or wants to seed twin training data from past sessions.
+description: One-shot import of historical Claude Code session transcripts into HAE raw store. Optional. Walks ~/.claude/projects/, extracts user prompts + (optionally) assistant responses, applies same redaction/weighting/PII pipeline as live capture. Idempotent — tracks processed sessions in <dataRoot>/state/backfilled_sessions.json. Use when user invokes /hae:backfill, asks "import history", "backfill HAE", or wants to seed twin training data from past sessions.
 ---
 
 # /hae:backfill — import history (one-shot, optional)
@@ -20,16 +20,16 @@ Based on answers, build the command:
 
 ```powershell
 # Dry run (no writes)
-powershell "C:\Projects\My habits\.hae\scripts\backfill_history.ps1" -DryRun
+powershell "${CLAUDE_PLUGIN_ROOT}/scripts/backfill_history.ps1" -DryRun
 
 # Real run, all sessions
-powershell "C:\Projects\My habits\.hae\scripts\backfill_history.ps1"
+powershell "${CLAUDE_PLUGIN_ROOT}/scripts/backfill_history.ps1"
 
 # Real run, limit to first 50 unprocessed sessions
-powershell "C:\Projects\My habits\.hae\scripts\backfill_history.ps1" -MaxSessions 50
+powershell "${CLAUDE_PLUGIN_ROOT}/scripts/backfill_history.ps1" -MaxSessions 50
 
-# Force reprocess (ignores .hae/state/backfilled_sessions.json)
-powershell "C:\Projects\My habits\.hae\scripts\backfill_history.ps1" -ForceReprocess
+# Force reprocess (ignores <dataRoot>/state/backfilled_sessions.json)
+powershell "${CLAUDE_PLUGIN_ROOT}/scripts/backfill_history.ps1" -ForceReprocess
 ```
 
 ### 2. Run + capture summary

@@ -1,6 +1,6 @@
 # HAE - AI Assistant Instructions
 
-Plugin instructions for Claude Code when working inside the `.hae/` directory. Adapted from the habits-project CLAUDE.md schema.
+Plugin instructions for Claude Code when working inside the HAE dev repo (`C:\Projects\HAE` typical) or its installed copy. Standalone plugin; data lives in operator's data dir, not in the repo.
 
 ## Core Rules
 
@@ -9,7 +9,7 @@ Plugin instructions for Claude Code when working inside the `.hae/` directory. A
 - **No silent schema breaks** - changes to `schema/record.schema.json` require migration plan for existing `prompts/raw/` records.
 - **No emoji in code or generated content** - per habits project rule. Markdown docs and skill output use plain text only.
 - **No em-dash characters in PowerShell sources** - Windows PowerShell 5.1 with non-Latin locale mangles them. Use `-` or `:` instead.
-- **ASCII-safe paths** - never hardcode `C:\Projects\My habits` outside `config.json`. All scripts derive paths from `$PSCommandPath` or `${CLAUDE_PLUGIN_ROOT}`.
+- **ASCII-safe paths** - never hardcode user-specific paths in source. Scripts derive plugin root from `$PSCommandPath` and data root from `Resolve-HaeDataRoot` helper (env > user config > %USERPROFILE%\.hae).
 - **One writer per file** - per-session JSONL filename `<date>__<sid>.jsonl` enforces single-writer guarantee. Don't introduce shared write paths.
 - **Idempotent installers** - `scripts/install_*.ps1` must be safe to re-run. Always backup with timestamp + GUID suffix before touching settings.json or registry files.
 - **No git ops without ask** - HAE is gitignored from habits repo; will become its own repo later. Don't `git add` / `git commit` unless explicitly asked.
