@@ -23,12 +23,12 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$haeRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
-$cfg = Get-Content "$haeRoot\config.json" -Raw -Encoding UTF8 | ConvertFrom-Json
-$rawDir = "$haeRoot\prompts\raw"
-$structDir = "$haeRoot\prompts\structured"
-$stateDir = "$haeRoot\state"
-$statePath = "$stateDir\classified_ids.json"
+. "$(Split-Path -Parent $PSCommandPath)\_lib.ps1"
+$cfg = Get-HaeConfig
+$rawDir = Get-HaeRawDir
+$structDir = Get-HaeStructuredDir
+$stateDir = Get-HaeStateDir
+$statePath = Join-Path $stateDir 'classified_ids.json'
 
 if (-not (Test-Path $structDir)) { New-Item -ItemType Directory -Path $structDir -Force | Out-Null }
 if (-not (Test-Path $stateDir))  { New-Item -ItemType Directory -Path $stateDir  -Force | Out-Null }

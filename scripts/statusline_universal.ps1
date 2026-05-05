@@ -11,8 +11,8 @@
 
 $ErrorActionPreference = 'SilentlyContinue'
 
-$haeRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
-$configPath = Join-Path $haeRoot 'config.json'
+. "$(Split-Path -Parent $PSCommandPath)\_lib.ps1"
+$haeRoot = Resolve-HaePluginRoot
 
 # Capture stdin once
 $stdinBytes = $null
@@ -25,10 +25,10 @@ try {
     }
 } catch {}
 
-# Read previous statusLine command from HAE config
+# Read previous statusLine command from merged HAE config (default + user)
 $prevCmd = $null
 try {
-    $config = Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $config = Get-HaeConfig
     if ($config.statusline -and $config.statusline.previous_command) {
         $prevCmd = [string]$config.statusline.previous_command
     }

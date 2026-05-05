@@ -1,0 +1,14 @@
+{
+    "_doc":  "HAE user config template. Copied to <dataRoot>/config.json on first install. Holds operator-private fields that override config.default.json. NEVER commit this file with real values.",
+    "_haeDataRoot_doc":  "Override data dir location. Leave null to use env var $HAE_DATA_DIR or default %USERPROFILE%\\.hae.",
+    "haeDataRoot":  null,
+    "weighting":  {
+                      "_doc":  "Add cwd path prefixes (e.g. C:\\Projects\\my-app) or basenames (my-app) for projects you actively work on. Run /hae:home add <path> after install. /hae:home auto-detect populates top-N from your raw capture.",
+                      "homes":  [],
+                      "project_overrides":  {}
+                  },
+    "statusline":  {
+                       "_doc":  "Chain HAE statusline AFTER another tool's statusline command. Common: OMC HUD. Set to that tool's status command string. Leave null/empty for HAE-only.",
+                       "previous_command":  null
+                   }
+}

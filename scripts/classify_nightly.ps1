@@ -5,9 +5,9 @@
 #
 # Phase 0: not implemented. Stub prints status and exits.
 
-$haeRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
-$rawDir = Join-Path $haeRoot 'prompts\raw'
-$structuredDir = Join-Path $haeRoot 'prompts\structured'
+. "$(Split-Path -Parent $PSCommandPath)\_lib.ps1"
+$rawDir = Get-HaeRawDir
+$structuredDir = Get-HaeStructuredDir
 
 Write-Host "HAE classify_nightly - Phase 0 stub"
 Write-Host ""

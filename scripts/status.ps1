@@ -4,12 +4,12 @@
 
 $ErrorActionPreference = 'SilentlyContinue'
 
-$haeRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
-$cfg = Get-Content "$haeRoot\config.json" -Raw -Encoding UTF8 | ConvertFrom-Json
+. "$(Split-Path -Parent $PSCommandPath)\_lib.ps1"
+$cfg = Get-HaeConfig
 
 # Raw tally - dedupes by record id (per-session file + combined daily file may both contain
 # the same record after /hae:consolidate; counting both would double-count).
-$rawDir = "$haeRoot\prompts\raw"
+$rawDir = Get-HaeRawDir
 $seenIds = @{}
 $total = 0
 $bySource = @{}

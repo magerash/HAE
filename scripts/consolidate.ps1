@@ -12,11 +12,10 @@ param(
 
 $ErrorActionPreference = 'Continue'
 
-$haeRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
-$configPath = Join-Path $haeRoot 'config.json'
-$config = Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
+. "$(Split-Path -Parent $PSCommandPath)\_lib.ps1"
+$config = Get-HaeConfig
 
-$rawDir = Join-Path $haeRoot $config.sink.raw_dir
+$rawDir = Get-HaeRawDir
 if (-not (Test-Path $rawDir)) { Write-Host "No raw dir."; exit 0 }
 
 # Discover per-session files: <yyyy-MM-dd>__<sid>.jsonl

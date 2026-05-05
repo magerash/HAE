@@ -23,9 +23,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$haeRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
-$structDir = "$haeRoot\prompts\structured"
-$profDir   = "$haeRoot\profile"
+. "$(Split-Path -Parent $PSCommandPath)\_lib.ps1"
+$structDir = Get-HaeStructuredDir
+$profDir   = Get-HaeProfileDir
+$overFile  = Get-HaeOverridesFile
 
 # Load persona + principles
 $persona = ''
@@ -45,7 +46,6 @@ Get-ChildItem $structDir -Filter '*.jsonl' -ErrorAction SilentlyContinue | Where
 
 # Load overrides (high-signal training data)
 $overrides = New-Object System.Collections.ArrayList
-$overFile = "$structDir\overrides.jsonl"
 if (Test-Path $overFile) {
     Get-Content $overFile -Encoding UTF8 -ErrorAction SilentlyContinue | ForEach-Object {
         if ([string]::IsNullOrWhiteSpace($_)) { return }

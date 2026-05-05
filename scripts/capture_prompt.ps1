@@ -8,12 +8,9 @@
 $ErrorActionPreference = 'SilentlyContinue'
 
 try {
-    $haeRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
-    $configPath = Join-Path $haeRoot 'config.json'
-    if (-not (Test-Path $configPath)) { exit 0 }
-
-    $config = Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
-    if (-not $config.capture.enabled) { exit 0 }
+    . "$(Split-Path -Parent $PSCommandPath)\_lib.ps1"
+    $config = Get-HaeConfig
+    if (-not $config -or -not $config.capture -or -not $config.capture.enabled) { exit 0 }
 
     # Read stdin as raw bytes and decode UTF-8 - independent of console encoding.
     $ms = New-Object System.IO.MemoryStream
@@ -111,7 +108,7 @@ try {
 
     $json = $record | ConvertTo-Json -Compress -Depth 10
 
-    $rawDir = Join-Path $haeRoot $config.sink.raw_dir
+    $rawDir = Get-HaeRawDir
     if (-not (Test-Path $rawDir)) { New-Item -ItemType Directory -Path $rawDir -Force | Out-Null }
 
     # Per-session dated file - single writer per file, no contention.

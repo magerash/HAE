@@ -21,12 +21,12 @@ function Get-HaeStatusline {
         if (-not $HaeRoot) {
             $HaeRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
         }
-        $configPath = Join-Path $HaeRoot 'config.json'
-        if (-not (Test-Path $configPath)) {
+        # Dot-source helper for shared config + path resolution
+        . (Join-Path $HaeRoot 'scripts\_lib.ps1')
+        $config = Get-HaeConfig
+        if (-not $config) {
             return '[hae#?] not configured'
         }
-
-        $config = Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
         # Color toggle
         $useColor = $true
@@ -61,7 +61,7 @@ function Get-HaeStatusline {
         $capColor = if ($config.capture.enabled) { $GREEN } else { $RED }
 
         # Counts - dedup by id across per-session + combined daily files
-        $rawDir = Join-Path $HaeRoot 'prompts\raw'
+        $rawDir = Get-HaeRawDir
         $today = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd')
         $todayRecords = 0
         $todaySessions = @{}
@@ -91,7 +91,7 @@ function Get-HaeStatusline {
         }
 
         # Structured count
-        $structDir = Join-Path $HaeRoot 'prompts\structured'
+        $structDir = Get-HaeStructuredDir
         $structCount = 0
         if (Test-Path $structDir) {
             Get-ChildItem $structDir -Filter '*.jsonl' -ErrorAction SilentlyContinue | ForEach-Object {
@@ -112,7 +112,7 @@ function Get-HaeStatusline {
         }
 
         # Profile completeness
-        $profDir = Join-Path $HaeRoot 'profile'
+        $profDir = Get-HaeProfileDir
         $profExists = @{
             P = (Test-Path (Join-Path $profDir 'paei.json'))
             H = (Test-Path (Join-Path $profDir 'hexaco.json'))

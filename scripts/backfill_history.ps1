@@ -16,19 +16,18 @@ param(
 
 $ErrorActionPreference = 'Continue'
 
-$haeRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
-$configPath = Join-Path $haeRoot 'config.json'
-$config = Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
+. "$(Split-Path -Parent $PSCommandPath)\_lib.ps1"
+$config = Get-HaeConfig
 
 if (-not (Test-Path $ProjectsRoot)) {
     Write-Error "Claude projects dir not found: $ProjectsRoot"
     exit 1
 }
 
-$rawDir = Join-Path $haeRoot $config.sink.raw_dir
+$rawDir = Get-HaeRawDir
 if (-not (Test-Path $rawDir)) { New-Item -ItemType Directory -Path $rawDir -Force | Out-Null }
 
-$stateDir = Join-Path $haeRoot 'state'
+$stateDir = Get-HaeStateDir
 if (-not (Test-Path $stateDir)) { New-Item -ItemType Directory -Path $stateDir -Force | Out-Null }
 $statePath = Join-Path $stateDir 'backfilled_sessions.json'
 

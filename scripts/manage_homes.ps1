@@ -20,19 +20,30 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$haeRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
-$configPath = Join-Path $haeRoot 'config.json'
-$rawDir = Join-Path $haeRoot 'prompts\raw'
+. "$(Split-Path -Parent $PSCommandPath)\_lib.ps1"
+$dataRoot = Resolve-HaeDataRoot
+$configPath = Join-Path $dataRoot 'config.json'   # operator-private user config (homes lives here, not plugin defaults)
+$rawDir = Get-HaeRawDir
 
-function Read-Config {
-    Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
+function Read-UserConfig {
+    if (Test-Path $configPath) {
+        try { return Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json } catch {}
+    }
+    # Bootstrap empty user config if missing
+    return [pscustomobject]@{
+        haeDataRoot = $null
+        weighting = [pscustomobject]@{ homes = @(); project_overrides = [pscustomobject]@{} }
+        statusline = [pscustomobject]@{ previous_command = $null }
+    }
 }
-function Write-Config($cfg) {
+function Write-UserConfig($cfg) {
+    $dir = Split-Path -Parent $configPath
+    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
     $json = $cfg | ConvertTo-Json -Depth 20
     [System.IO.File]::WriteAllText($configPath, $json, [System.Text.UTF8Encoding]::new($false))
 }
 
-$cfg = Read-Config
+$cfg = Read-UserConfig
 if (-not $TopN) {
     $TopN = [int]$cfg.weighting.auto_promote.top_n
     if ($TopN -le 0) { $TopN = 3 }
@@ -80,7 +91,7 @@ switch ($Subcommand.ToLowerInvariant()) {
         }
         $homes += $Target
         $cfg.weighting.homes = @($homes)
-        Write-Config $cfg
+        Write-UserConfig $cfg
         Write-Host "Added: $Target"
         Write-Host "Homes now: $($homes.Count)"
     }
@@ -97,7 +108,7 @@ switch ($Subcommand.ToLowerInvariant()) {
             exit 0
         }
         $cfg.weighting.homes = $newHomes
-        Write-Config $cfg
+        Write-UserConfig $cfg
         Write-Host "Removed: $Target"
         Write-Host "Homes now: $($newHomes.Count)"
     }
@@ -186,7 +197,7 @@ switch ($Subcommand.ToLowerInvariant()) {
             }
             if ($added -gt 0) {
                 $cfg.weighting.homes = @($homes)
-                Write-Config $cfg
+                Write-UserConfig $cfg
                 Write-Host "Added $added home(s). Total now: $($homes.Count)"
             } else {
                 Write-Host "No additions, all top candidates already in homes."

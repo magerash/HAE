@@ -21,12 +21,12 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$haeRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
-$structDir = "$haeRoot\prompts\structured"
-$rawDir    = "$haeRoot\prompts\raw"
-$profDir   = "$haeRoot\profile"
-$stateDir  = "$haeRoot\state"
-$outPath   = "$stateDir\operator_report_v$Version.md"
+. "$(Split-Path -Parent $PSCommandPath)\_lib.ps1"
+$structDir = Get-HaeStructuredDir
+$rawDir    = Get-HaeRawDir
+$profDir   = Get-HaeProfileDir
+$stateDir  = Get-HaeStateDir
+$outPath   = Join-Path $stateDir "operator_report_v$Version.md"
 
 if (-not (Test-Path $stateDir)) { New-Item -ItemType Directory -Path $stateDir -Force | Out-Null }
 
