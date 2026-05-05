@@ -4,6 +4,24 @@ Format: `### Changelog vX.Y.Z YYYY-MM-DD`. Style: professional, minimalistic. On
 
 ---
 
+### Changelog v0.4.0 2026-05-06
+
+**Plugin split + global cross-project install + config split + Path A twin.** Breaking change: plugin lives in own dev repo, data dir relocated.
+
+- **Repo split.** Plugin source moved from `C:\Projects\My habits\.hae\` (in-project, gitignored) to standalone dev repo at `C:\Projects\HAE\`. Own git history. Habits project no longer carries `.hae/`.
+- **Copy-mode installer.** `scripts/install_plugin.ps1` overhauled: `-CopyTo` (default `C:\Plugins\hae`), `-DataDir` (default `%USERPROFILE%\.hae`), `-Mode Copy` (default) or `-Mode Junction` (live dev), `-PersistEnv` to set `$env:HAE_DATA_DIR` user-scope. Robocopy excludes operator data dirs from install copy.
+- **Global cross-project data dir.** Captures from every project's Claude Code session funnel into single shared `<dataRoot>` (default `%USERPROFILE%\.hae\`). Records carry `project` + `is_home_project` + `project_weight` for downstream weighting. `weighting.homes` lives in operator user config so capture is project-aware without per-project install.
+- **Config split.** `config.default.json` (committed: capture flags, redact patterns, classifier categories, twin gates defaults). `config.user.example.json` (template). `<dataRoot>/config.json` (operator-private: homes, project_overrides, statusline.previous_command). Loader at `scripts/_lib.ps1` deep-merges user over default. Operator-private fields no longer at risk of dev-repo leak.
+- **`scripts/_lib.ps1` helper.** New shared library: `Resolve-HaePluginRoot`, `Resolve-HaeDataRoot`, `Get-HaeConfig`, `Get-HaeRawDir`/`StructuredDir`/`ProfileDir`/`StateDir`, `Ensure-HaeDataRoot`. All scripts dot-source `_lib.ps1` and resolve data paths through helper. Hot path benchmarked: capture_prompt.ps1 ~470ms cold, no regression vs pre-refactor (~520ms).
+- **All scripts refactored** (12 files): `capture_prompt`, `capture_response`, `twin`, `status`, `classify`, `classify_nightly`, `consolidate`, `backfill_history`, `manage_homes` (writes user config not plugin), `report`, `statusline`, `statusline_universal`. Hardcoded `$haeRoot\prompts\*` literals replaced with helper calls.
+- **SKILL.md path templating.** All skill files use `${CLAUDE_PLUGIN_ROOT}` for script paths, `<dataRoot>` for data paths, `$env:HAE_DATA_DIR` for env-var references. No more username-embedded literal paths.
+- **Path A twin invocation** (Phase 5 wire). `/release-plan` slash command runs `${CLAUDE_PLUGIN_ROOT}/scripts/twin.ps1 "<q>"` via Bash, composes twin block inline. Subagent spawn via `hae:hae-twin` removed — plugin agent registry not reliably available from main-loop Task. No project mirror needed.
+- **Seeds folder dropped.** Habits-specific session logs (`v0.92`, `v0.93`) moved to operator data dir at `<dataRoot>/docs/internal-sessions/`. Auto-classifier patterns + user backfill bootstrap classifier for any user; synthetic universal seeds rejected as classifier-poisoning risk.
+- **MIGRATION.md added** — runbook for users migrating from in-project `.hae/` layout.
+- Plugin manifest version 0.4.0, phase 5, scope `global-cross-project`.
+
+---
+
 ### Changelog v0.3.1 2026-05-05
 
 Process-count + window-flash polish. Eliminate one PowerShell child spawn per statusline render via dot-source pattern. Hide all PowerShell windows on hook + statusline invocations.

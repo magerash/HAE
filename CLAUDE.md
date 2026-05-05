@@ -129,13 +129,13 @@ Symmetric for `Stop` hook (`capture_response.ps1`), gated by `capture.include_re
 | 2 | Profile (PAEI + HEXACO Brief + custom + principles + persona generation) | done v0.3.0 (PAEI 30Q + HEXACO 24Q + Custom 8Q + 6 principles + persona regen; behavioral calibration validated) |
 | 3 | Classifier (raw -> structured with category + scope_signal + override delta) | done v0.2.0 (classify.ps1 + auto-classifier 5 patterns + bulk subagent loop; 1670/1670 classified; 75 overrides) |
 | 4 | Twin agent (persona + few-shot retrieval + override exemplars) | done v0.2.0 (twin.ps1 + /hae:twin; validated via V1 month-view A/B test with 18 vs 75 overrides) |
-| 5 | Plug into release-manager loop as operator surrogate | in progress (RM agent gates wired; user-configurable via `config.json` `twin.gates`; default: Phase 8 only) |
+| 5 | Plug into release-manager loop as operator surrogate + standalone repo + global cross-project install + config split + Path A twin invocation | done v0.4.0 |
 
 ## Current Version
 
-- **Version:** v0.3.1
-- **Phase:** 5 in progress (RM agent twin pre-flight gates wired; user-configurable; default Phase 8 only)
-- **Last Updated:** 2026-05-05
+- **Version:** v0.4.0
+- **Phase:** 5 done. Plugin lives in own repo at C:\Projects\HAE; installs to C:\Plugins\hae; data at %USERPROFILE%\.hae. Path A twin (Bash + inline) wired into /release-plan. Config split (defaults + user). All scripts use _lib.ps1 helper.
+- **Last Updated:** 2026-05-06
 
 ## Quick Reference
 
