@@ -4,7 +4,7 @@ Plugin that captures operator prompts + decisions across Claude Code sessions, b
 
 ## Status
 
-**v0.4.0 — Phases 0-4 done, Phase 5 in progress.** Capture live, classifier shipped, full operator profile, twin agent answering at medium-high confidence. v0.4.0 splits the plugin into its own dev repo with global cross-project install + shared data directory.
+**v0.4.1 — Phases 0-5 done.** Capture live, classifier shipped, full operator profile, twin agent answering at medium-high confidence. Plugin in own dev repo with global cross-project install + shared data directory. v0.4.1 adds progressive-disclosure documentation chunks under `docs/chunks/`.
 
 ## Why
 

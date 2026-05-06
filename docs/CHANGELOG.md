@@ -4,11 +4,23 @@ Format: `### Changelog vX.Y.Z YYYY-MM-DD`. Style: professional, minimalistic. On
 
 ---
 
+### Changelog v0.4.1 2026-05-06
+
+**Documentation chunks scaffolded.** Progressive-disclosure RAG-style chunk system added under `docs/chunks/`. Root CLAUDE.md stays small; topic-specific context loads on demand.
+
+- **`docs/chunks/` tree** (19 files): `README.md` (chunk contract), `INDEX.md` (codebase index), `architecture/` (overview, capture-pipeline, classify-pipeline, twin-pipeline, profile-system), `features/` (capture, redaction, weighting, classify, twin, profile, statusline, backfill, consolidate, install), `patterns/` (powershell-conventions, hot-path, jsonl-records, idempotent-installer, data-root-resolution).
+- **Chunk format** per CLAUDE.md spec: Quick Reference, Overview, Key Functions, Code Patterns, Common Issues. Each chunk under 250 lines, ASCII only, cross-linked via "Related chunks" headers.
+- **Maintenance contract** wired into Version Workflow step 7: schema, skill, script, or hot-path changes require chunk update in same release.
+- **Research write-up** at `docs/research/chunking_implementation_2026-05-06.md` documents adaptation from the Android-targeted base research, 2026 web findings (CLAUDE.md best practices, cAST), and deferred items (subdir CLAUDE.md, AST chunking, vector DB).
+- No code, schema, or hook changes. Documentation only.
+
+---
+
 ### Changelog v0.4.0 2026-05-06
 
 **Plugin split + global cross-project install + config split + Path A twin.** Breaking change: plugin lives in own dev repo, data dir relocated.
 
-- **Repo split.** Plugin source moved from `C:\Projects\My habits\.hae\` (in-project, gitignored) to standalone dev repo at `C:\Projects\HAE\`. Own git history. Habits project no longer carries `.hae/`.
+- **Repo split.** Plugin source moved from `Some project\.hae\` (in-project, gitignored) to standalone dev repo at `C:\Projects\HAE\`. Own git history. Habits project no longer carries `.hae/`.
 - **Copy-mode installer.** `scripts/install_plugin.ps1` overhauled: `-CopyTo` (default `C:\Plugins\hae`), `-DataDir` (default `%USERPROFILE%\.hae`), `-Mode Copy` (default) or `-Mode Junction` (live dev), `-PersistEnv` to set `$env:HAE_DATA_DIR` user-scope. Robocopy excludes operator data dirs from install copy.
 - **Global cross-project data dir.** Captures from every project's Claude Code session funnel into single shared `<dataRoot>` (default `%USERPROFILE%\.hae\`). Records carry `project` + `is_home_project` + `project_weight` for downstream weighting. `weighting.homes` lives in operator user config so capture is project-aware without per-project install.
 - **Config split.** `config.default.json` (committed: capture flags, redact patterns, classifier categories, twin gates defaults). `config.user.example.json` (template). `<dataRoot>/config.json` (operator-private: homes, project_overrides, statusline.previous_command). Loader at `scripts/_lib.ps1` deep-merges user over default. Operator-private fields no longer at risk of dev-repo leak.

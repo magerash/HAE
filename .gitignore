@@ -28,4 +28,7 @@ Thumbs.db
 !profile/.gitkeep
 !state/.gitkeep
 
-notes.md
+CLAUDE.md
+.claude/
+docs/notes
+docs/research
