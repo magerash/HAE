@@ -4,11 +4,55 @@ Plugin that captures operator prompts + decisions across Claude Code sessions, b
 
 ## Status
 
-**v0.4.1 — Phases 0-5 done.** Capture live, classifier shipped, full operator profile, twin agent answering at medium-high confidence. Plugin in own dev repo with global cross-project install + shared data directory. v0.4.1 adds progressive-disclosure documentation chunks under `docs/chunks/`.
+**v0.4.2 — Phases 0-5 done.** Capture live, classifier shipped, full operator profile, twin agent answering at medium-high confidence. Plugin in own dev repo with global cross-project install + shared data directory. v0.4.1 adds progressive-disclosure documentation chunks under `docs/chunks/`. v0.4.2 bootstraps release-planning docs under `docs/release/` (RICE backlog, current/next scope, research queue, roadmap) with first twin pre-flight cycle.
 
 ## Why
 
 Existing AI "twin" products (Personal.ai, Delphi, Replika) imitate *voice*. HAE imitates *judgment* — the deltas between what an agent proposes and what the operator decides. That's the highest-signal training data for a twin.
+
+## Installation
+
+HAE is a global cross-project plugin. One install, captures from every project's CLI session land in a shared data dir.
+
+### Claude Code
+
+```powershell
+git clone https://github.com/Magerash/HAE C:\Projects\HAE
+powershell -File C:\Projects\HAE\scripts\install_plugin.ps1 -PersistEnv
+# restart Claude Code
+```
+
+Installer copies plugin to `C:\Plugins\hae`, registers a local marketplace (`hae-local`), bootstraps `%USERPROFILE%\.hae\` data dir, persists `HAE_DATA_DIR` env, and rewires statusline. Idempotent.
+
+If you ever skip the installer (e.g. manual file copy), run `/hae:setup persist` to bootstrap data dir + env + statusline.
+
+See `INSTALL.md` for `-CopyTo`, `-DataDir`, `-Mode Junction` (live dev), and uninstall details.
+
+> **Note:** GitHub-marketplace install (`/plugin marketplace add Magerash/HAE`) requires a repo-layout refactor (plugin -> `plugins/hae/`, marketplace -> `.claude-plugin/marketplace.json`). Tracked as future work; current single-plugin layout cannot host both manifests in `.claude-plugin/` simultaneously.
+
+### Codex CLI
+
+*Coming soon.* HAE will support OpenAI Codex CLI sessions via the same hook contract once Codex CLI exposes equivalent `UserPromptSubmit` / `Stop` hook events. Tracking issue: TBD.
+
+For now, Codex sessions are not captured. Claude Code captures land in `~/.hae/prompts/raw/` and the twin agent draws from those records regardless of which CLI invokes `/hae:twin` later.
+
+## Plugin commands
+
+User invokes via `/hae:<name>` (Claude Code namespaces plugin skills automatically).
+
+| Command | Purpose |
+|---------|---------|
+| `/hae:setup` | Bootstrap data dir + env + statusline after marketplace install (idempotent). |
+| `/hae:status` | Dashboard: capture stats, profile completeness, hook + scheduler state. |
+| `/hae:home` | Manage `weighting.homes` list — list / add / remove / auto-detect top-volume projects. |
+| `/hae:profile` | Run PAEI 30Q + HEXACO Brief 24Q + custom 8Q + free-form principles; generate `persona.md`. |
+| `/hae:backfill` | One-shot import of historical Claude Code session transcripts from `~/.claude/projects/`. |
+| `/hae:consolidate` | Merge per-session raw files into combined dated files. |
+| `/hae:classify` | Phase 3 classifier pass — raw → structured (8-cat taxonomy + override deltas). |
+| `/hae:twin` | Phase 4 emulator subagent. Requires Phase 2 profile + Phase 3 records. |
+| `/hae:statusline` | Install / preview / restore HAE statusline (standalone or composed). |
+
+Run `/plugin list` after install — `hae@hae-local` (or `hae@hae`) should appear enabled.
 
 ## Layout
 
@@ -16,7 +60,8 @@ Existing AI "twin" products (Personal.ai, Delphi, Replika) imitate *voice*. HAE 
 
 ```
 HAE/
-├── .claude-plugin/plugin.json    # plugin manifest
+├── .claude-plugin/
+│   └── plugin.json               # plugin manifest (single-plugin layout; no marketplace.json yet)
 ├── README.md
 ├── INSTALL.md                    # install guide (Copy mode default, Junction for dev)
 ├── CHANGELOG.md
@@ -39,7 +84,8 @@ HAE/
 │   ├── statusline_universal.ps1
 │   ├── install_statusline.ps1
 │   ├── report.ps1
-│   ├── install_plugin.ps1        # one-command install via local marketplace + Copy mode
+│   ├── install_plugin.ps1        # full install: marketplace + Copy + bootstrap
+│   ├── setup_data.ps1            # post-marketplace bootstrap (data dir + env + statusline)
 │   └── install_hooks.ps1         # legacy direct-hook installer
 ├── schema/record.schema.json
 ├── tests/                        # questionnaire banks (committed)
@@ -92,35 +138,77 @@ User opts in by running `/hae:backfill` — never auto-runs. Some users will ski
 
 ## Project weighting
 
-Not every prompt is equal training data. Active-dev focus produces dense, multi-turn, high-judgment traffic. Drive-by prompts in scratch projects, doc browsing, or one-off scripts produce diluted signal. Mixing 1:1 in twin training dilutes the persona toward generic helpfulness.
+Not every prompt is equal training data. Twin retrieval prioritizes high-signal records when emulating operator decisions. Three tiers, decided at capture time from two signals: `homes` membership (curated) and capture `source` (live vs imported).
 
-Each captured record carries:
+### Tiers
 
-- `project` — basename of cwd
-- `is_home_project` — true when cwd matches an entry in `config.weighting.homes`
-- `project_weight` — `home_weight` (1.0) for matched homes, `other_weight` (0.3) for everything else, or a `project_overrides[<name>]` value
+| Tier | Weight | When | Meaning |
+|------|--------|------|---------|
+| `home` | **1.0** | cwd matches `weighting.homes` entry | Curated primary project. Defines operator identity. Slow-change. |
+| `active` | **0.7** | live capture (`source=hook`), not in homes | Currently being worked on. Recent signal. The project you're typing in right now. |
+| `other` | **0.3** | imported history (`source=backfill`), not in homes | Older drive-by sessions. Useful but diluted persona signal. |
 
-`weighting.homes` is a list. Each entry is either:
-- **Path prefix** (e.g. `C:\Projects\<your-project>`) — matches any cwd starting with this prefix
-- **Bare basename** (e.g. `<your-project>`) — matches any cwd whose basename equals this
-
-Empty `homes` = no project is home, everything gets `other_weight`. Default ships empty.
-
-**Bootstrap your homes list:**
+Decision logic at capture (capture_prompt.ps1, capture_response.ps1, backfill_history.ps1):
 
 ```
-/hae:home auto-detect           # preview top-volume projects from captured records
-/hae:home auto-detect -Apply    # actually write to config
-/hae:home add "C:\Projects\X"   # manually add
+if cwd matches homes:        tier=home,    weight=home_weight
+elif source == 'hook':       tier=active,  weight=active_weight
+else (source == 'backfill'): tier=other,   weight=other_weight
+```
+
+Each record carries: `project`, `is_home_project`, `project_weight`, `tier`, `source`.
+
+### Why three tiers, not two?
+
+`home` is a manual stamp — "this project IS the operator surface." Curated, stable, opt-in. Auto-detection is volume-based, and volume ≠ value: a 3-week research detour produces high volume but low persona signal. Home is the anchor; active is the wind.
+
+The active/other split is automatic via `source`. Live captures are recent by definition (you're typing now), so they get the active tier without any list to maintain. Backfilled records are historical imports — older focus, lower weight unless homed.
+
+### Homes list — the only thing you manage
+
+`weighting.homes` lives in your user config (`<dataRoot>/config.json`). Each entry is either:
+
+- **Path prefix** — e.g. `C:\Projects\my-app` — matches any cwd starting with this prefix
+- **Bare basename** — e.g. `my-app` — matches any cwd whose basename equals this
+
+Empty `homes` = nothing is home. Live captures still get active (0.7), backfill stays other (0.3). Default ships empty.
+
+```
 /hae:home list                  # see current homes
+/hae:home add C:\Projects\X     # manually add
+/hae:home add my-app            # add by bare name
+/hae:home remove my-app         # remove
+/hae:home auto-detect           # preview top-volume projects from captured records
+/hae:home auto-detect -Apply    # write to config
 ```
 
 Capture scripts re-read config on every hook fire — no Claude Code restart needed when homes change.
 
-Used by:
+### Examples
+
+| cwd | source | homes match? | tier | weight |
+|-----|--------|--------------|------|--------|
+| `C:\Projects\My habits` (live) | hook | yes | home | 1.0 |
+| `C:\Projects\HAE` (live, not in homes) | hook | no | active | 0.7 |
+| `C:\Projects\HAE` (backfilled) | backfill | no | other | 0.3 |
+| `C:\Projects\My habits` (backfilled) | backfill | yes | home | 1.0 |
+| Random one-off cwd (live) | hook | no | active | 0.7 |
+
+Note: weight is **frozen at capture time**. If you later add a project to homes, existing records keep their original tier. Re-tagging old records is a separate opt-in operation (not yet implemented).
+
+### Used by
+
 - **Phase 3 classifier** — can skip records below a weight threshold to keep structured set lean
-- **Phase 4 twin few-shot** — retriever multiplies similarity score by `project_weight` so home-project exemplars dominate
+- **Phase 4 twin few-shot** — retriever multiplies similarity score by `project_weight` so home + active exemplars outrank backfilled drive-bys
 - **Phase 2 persona regen** — weighted aggregation prevents off-topic projects from skewing inferred decision style
+
+### Recency / time-decay
+
+Tier reflects "is this project relevant right now," not "how old is the record." Age-based decay (e.g. records from 6 months ago weighted lower than today's) is a Phase 4 retrieval-time concern, not a capture-time concern. Capture stores `ts` per record; the twin can apply time-decay multipliers when ranking exemplars without changing stored weights.
+
+### Escape hatch
+
+`weighting.project_overrides` (object) — set explicit per-project weights when a project doesn't fit the home/active/other model. Example: a research project that should always be 0.5 regardless of source. Use sparingly.
 
 ## Personality stack
 

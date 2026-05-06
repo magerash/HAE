@@ -1,10 +1,12 @@
 # INSTALL
 
-## Quick start
+Two install paths: (A) full bootstrap script for Claude Code, (B) Codex CLI (coming soon).
+
+## A. Claude Code — full bootstrap script
 
 ```powershell
 # 1. Clone the dev repo
-git clone <hae-repo-url> C:\Projects\HAE
+git clone https://github.com/Magerash/HAE C:\Projects\HAE
 
 # 2. Run installer (default: Copy to C:\Plugins\hae, data at %USERPROFILE%\.hae)
 powershell -File C:\Projects\HAE\scripts\install_plugin.ps1 -PersistEnv
@@ -12,7 +14,26 @@ powershell -File C:\Projects\HAE\scripts\install_plugin.ps1 -PersistEnv
 # 3. Restart Claude Code
 ```
 
-That's it. Capture starts immediately on next prompt; data lands in `%USERPROFILE%\.hae\prompts\raw\`. From any project's Claude Code session.
+Capture starts on next prompt. Data lands in `%USERPROFILE%\.hae\prompts\raw\` from any project's Claude Code session.
+
+The installer:
+1. Robocopies plugin source -> `C:\Plugins\hae` (or `-CopyTo <path>`).
+2. Creates local marketplace `hae-local` with junction to install dir.
+3. Registers in `~/.claude/plugins/{known_marketplaces,installed_plugins}.json`.
+4. Enables `hae@hae-local` in `~/.claude/settings.json`.
+5. Bootstraps `%USERPROFILE%\.hae\` (or `-DataDir <path>`) data dir tree + config.
+6. Persists `HAE_DATA_DIR` env (with `-PersistEnv`).
+7. Rewires statusline to plugin's `statusline_universal.ps1`.
+
+If steps 5-7 ever drift out of sync (e.g. settings.json reset by Claude Code update), run `/hae:setup persist` or `scripts/setup_data.ps1 -PersistEnv` to re-bootstrap.
+
+> **Note:** GitHub-marketplace install (`/plugin marketplace add Magerash/HAE`) is *not* supported in current repo layout. Claude Code refuses to load a plugin when both `marketplace.json` and `plugin.json` co-exist in the same `.claude-plugin/` dir. Future work: split into `plugins/hae/` subdir.
+
+## B. Codex CLI
+
+*Coming soon.* Codex CLI capture lands when Codex exposes equivalent `UserPromptSubmit` / `Stop` hook events. The data dir + redaction pipeline + twin agent are CLI-agnostic — the only missing piece is the hook contract.
+
+Until then: install via **A** for Claude Code; Codex sessions will not capture, but the twin agent (when invoked from any CLI) reads the shared `~/.hae/` records.
 
 ## What gets installed
 
@@ -92,12 +113,28 @@ Reads `~/.claude/projects/`, applies same redaction + weighting + path-PII pipel
 
 ```
 /plugin list                # hae@hae-local enabled
-/reload-plugins             # 0 errors
+/reload-plugins             # 0 errors, 7 hooks, 15 agents
 /hae:status                 # capture stats
 /hae:twin "test"            # twin take (if persona built)
 ```
 
 Type any prompt -> record at `%USERPROFILE%\.hae\prompts\raw\<date>__<sid8>.jsonl` within 1s.
+
+## Plugin commands
+
+After install, all skills available under `/hae:` namespace:
+
+| Command | Purpose |
+|---------|---------|
+| `/hae:setup` | Re-bootstrap data dir + env + statusline if state drifts (idempotent; auto-runs in path A). |
+| `/hae:status` | Capture stats + profile completeness + hook state. |
+| `/hae:home` | Manage `weighting.homes` — list / add / remove / auto-detect. |
+| `/hae:profile` | Run questionnaires (PAEI + HEXACO + custom) + generate persona. |
+| `/hae:backfill` | Import historical Claude Code session transcripts. |
+| `/hae:consolidate` | Merge per-session raw files into combined dated files. |
+| `/hae:classify` | Phase 3 classifier pass (raw -> structured). |
+| `/hae:twin` | Twin emulator subagent (requires Phase 2 profile + Phase 3 records). |
+| `/hae:statusline` | Install / preview / restore HAE statusline. |
 
 ## Uninstall
 

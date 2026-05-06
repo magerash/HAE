@@ -60,11 +60,24 @@ if ($prevCmd) {
     } catch { $prevOut = '' }
 }
 
+# Extract cwd from captured stdin JSON (Claude Code passes session context)
+$cwdFromStdin = $null
+if ($stdinBytes -and $stdinBytes.Length -gt 0) {
+    try {
+        $payload = [System.Text.Encoding]::UTF8.GetString($stdinBytes)
+        if (-not [string]::IsNullOrWhiteSpace($payload)) {
+            $hook = $payload | ConvertFrom-Json
+            if ($hook.cwd) { $cwdFromStdin = [string]$hook.cwd }
+            elseif ($hook.workspace -and $hook.workspace.current_dir) { $cwdFromStdin = [string]$hook.workspace.current_dir }
+        }
+    } catch {}
+}
+
 # Run HAE segment IN-PROCESS via dot-source (no child PS spawn)
 $haeOut = ''
 try {
     . (Join-Path $PSScriptRoot 'statusline.ps1')
-    $haeOut = (Get-HaeStatusline -HaeRoot $haeRoot).TrimEnd("`r", "`n")
+    $haeOut = (Get-HaeStatusline -HaeRoot $haeRoot -Cwd $cwdFromStdin).TrimEnd("`r", "`n")
 } catch { $haeOut = '' }
 
 # Compose - one row per non-empty source

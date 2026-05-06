@@ -1,6 +1,6 @@
 {
     "_doc":  "HAE plugin defaults. Committed to dev repo. Universal across all users. Operator-private fields (homes, project_overrides, statusline.previous_command) live in user config.json in data dir.",
-    "version":  "0.4.1",
+    "version":  "0.4.2",
     "phase":  5,
     "scope":  "global-cross-project",
     "capture":  {
@@ -47,9 +47,10 @@
                  "overrides_file":  "prompts/structured/overrides.jsonl"
              },
     "weighting":  {
-                      "_doc":  "Training-time weight per record. Home projects = active dev focus, signal density highest. Others = drive-by sessions, useful but diluted. 'homes' is set in user config.json - this default is empty so out-of-box every project is weighted as 'other'. Run /hae:home auto-detect after a week of capture to auto-populate top N by record volume.",
+                      "_doc":  "Training-time weight per record. 3 tiers determined by source + homes match. home (1.0) = curated primary projects, manually flagged in user config. active (0.7) = live captures (source=hook) not in homes - currently being worked on, recent signal. other (0.3) = backfilled history (source=backfill) not in homes - older drive-by sessions. 'homes' is set in user config.json - this default is empty so out-of-box live captures get active_weight and backfilled records get other_weight. Run /hae:home auto-detect after a week of capture to surface top-volume projects to promote to homes.",
                       "homes":  [],
                       "home_weight":  1.0,
+                      "active_weight":  0.7,
                       "other_weight":  0.3,
                       "project_overrides":  {},
                       "auto_promote":  {

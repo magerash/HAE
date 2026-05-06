@@ -44,12 +44,15 @@ function Write-UserConfig($cfg) {
 }
 
 $cfg = Read-UserConfig
+# Merged config (defaults + user overrides) - source of truth for weight values + auto_promote tunables.
+# User file rarely sets these explicitly; defaults live in plugin's config.default.json.
+$mergedCfg = Get-HaeConfig
 if (-not $TopN) {
-    $TopN = [int]$cfg.weighting.auto_promote.top_n
+    $TopN = [int]$mergedCfg.weighting.auto_promote.top_n
     if ($TopN -le 0) { $TopN = 3 }
 }
 if (-not $MinRecords) {
-    $MinRecords = [int]$cfg.weighting.auto_promote.min_records
+    $MinRecords = [int]$mergedCfg.weighting.auto_promote.min_records
     if ($MinRecords -le 0) { $MinRecords = 100 }
 }
 
@@ -57,9 +60,12 @@ $homes = @($cfg.weighting.homes | Where-Object { $_ -ne $null -and -not [string]
 
 switch ($Subcommand.ToLowerInvariant()) {
     'list' {
+        $hw = $mergedCfg.weighting.home_weight
+        $aw = $mergedCfg.weighting.active_weight
+        $ow = $mergedCfg.weighting.other_weight
         Write-Host "Current homes ($($homes.Count)):"
         if ($homes.Count -eq 0) {
-            Write-Host "  (none, all captures get other_weight = $($cfg.weighting.other_weight))"
+            Write-Host "  (none - live captures get active_weight=$aw, backfill gets other_weight=$ow)"
         } else {
             foreach ($h in $homes) {
                 $kind = if ($h -match '[\\/]') { 'path' } else { 'name' }
@@ -68,10 +74,14 @@ switch ($Subcommand.ToLowerInvariant()) {
             }
         }
         Write-Host ""
-        Write-Host "Weights: home=$($cfg.weighting.home_weight)  other=$($cfg.weighting.other_weight)"
-        if ($cfg.weighting.project_overrides) {
-            $ovr = $cfg.weighting.project_overrides.PSObject.Properties | Where-Object { $_.Name -ne '_example_other_repo' }
+        Write-Host "Weights: home=$hw  active=$aw  other=$ow"
+        Write-Host "  home   = matched homes entry"
+        Write-Host "  active = live capture (source=hook), not in homes"
+        Write-Host "  other  = backfill (source=backfill), not in homes"
+        if ($mergedCfg.weighting.project_overrides) {
+            $ovr = $mergedCfg.weighting.project_overrides.PSObject.Properties | Where-Object { $_.Name -ne '_example_other_repo' }
             if ($ovr) {
+                Write-Host ""
                 Write-Host "Per-project overrides:"
                 foreach ($o in $ovr) { Write-Host "  - $($o.Name) = $($o.Value)" }
             }
@@ -133,12 +143,16 @@ switch ($Subcommand.ToLowerInvariant()) {
                         $counts[$project] = @{
                             project  = $project
                             cwd      = $null
+                            cwd_tail = $null
                             records  = 0
                             sessions = @{}
                         }
                     }
                     if ($r.cwd -and -not $counts[$project].cwd) {
                         $counts[$project].cwd = [string]$r.cwd
+                    }
+                    if ($r.cwd_tail -and -not $counts[$project].cwd_tail) {
+                        $counts[$project].cwd_tail = [string]$r.cwd_tail
                     }
                     $counts[$project].records++
                     if ($r.session_id) { $counts[$project].sessions[[string]$r.session_id] = $true }
@@ -153,9 +167,12 @@ switch ($Subcommand.ToLowerInvariant()) {
 
         $ranked = $counts.Values |
             ForEach-Object {
+                # Display: full cwd if stored, else partial tail (privacy mode), else '(unknown)'.
+                # Matching: only full cwd qualifies as path-mode; tail is too lossy for prefix match.
+                $cwdDisplay = if ($_.cwd) { $_.cwd } elseif ($_.cwd_tail) { ".../$($_.cwd_tail)" } else { '(unknown)' }
                 [pscustomobject]@{
                     project    = $_.project
-                    cwd        = $_.cwd
+                    cwd        = $cwdDisplay
                     home_entry = if ($_.cwd) { $_.cwd } else { $_.project }
                     match_kind = if ($_.cwd) { 'path' } else { 'name' }
                     records    = $_.records

@@ -19,7 +19,7 @@ param(
     [ValidateSet('Copy','Junction')] [string]$Mode = 'Copy',        # Copy=robocopy to install path; Junction=marketplace -> source dir
     [string]$MarketplaceName = 'hae-local',
     [string]$PluginName = 'hae',
-    [string]$PluginVersion = '0.4.0',
+    [string]$PluginVersion,                                         # default: read from plugin.json
     [switch]$PersistEnv,                                            # write HAE_DATA_DIR to user-scope env
     [switch]$Uninstall,
     [switch]$Force
@@ -32,9 +32,20 @@ if (-not $PluginPath) {
     $PluginPath = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
 }
 $PluginPath = (Resolve-Path $PluginPath).Path
-if (-not (Test-Path (Join-Path $PluginPath '.claude-plugin\plugin.json'))) {
+$pluginJsonPath = Join-Path $PluginPath '.claude-plugin\plugin.json'
+if (-not (Test-Path $pluginJsonPath)) {
     Write-Error "Not a Claude Code plugin (missing .claude-plugin\plugin.json): $PluginPath"
     exit 1
+}
+
+# Read version from plugin.json (single source of truth) unless overridden
+if (-not $PluginVersion) {
+    $srcManifest = Get-Content $pluginJsonPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($srcManifest.version) {
+        $PluginVersion = $srcManifest.version
+    } else {
+        $PluginVersion = '0.0.0'
+    }
 }
 
 # Resolve data dir (env > param > default)
@@ -123,9 +134,15 @@ Write-Host ""
 if ($Mode -eq 'Copy') {
     if (-not (Test-Path $CopyTo)) { New-Item -ItemType Directory -Path $CopyTo -Force | Out-Null }
     Write-Host "  Copying source -> install path (excluding operator data)..."
+    # /XD with bare names matches anywhere in tree (would exclude skills/profile).
+    # Use absolute paths so only top-level dirs are excluded.
     $rcArgs = @(
         $PluginPath, $CopyTo, '/E', '/PURGE',
-        '/XD', 'prompts', 'profile', 'state', '.git',
+        '/XD',
+            (Join-Path $PluginPath 'prompts'),
+            (Join-Path $PluginPath 'profile'),
+            (Join-Path $PluginPath 'state'),
+            (Join-Path $PluginPath '.git'),
         '/XF', '*.hae-backup-*.json',
         '/NFL','/NDL','/NJH','/NJS','/NP'
     )

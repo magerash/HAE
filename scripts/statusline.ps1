@@ -14,7 +14,8 @@ $ErrorActionPreference = 'SilentlyContinue'
 function Get-HaeStatusline {
     [CmdletBinding()]
     param(
-        [string]$HaeRoot = $null
+        [string]$HaeRoot = $null,
+        [string]$Cwd = $null
     )
 
     try {
@@ -101,6 +102,38 @@ function Get-HaeStatusline {
             }
         }
 
+        # Current project tier - matches capture script logic.
+        # Tier colors: home=GREEN (curated), active=BCYAN (current focus), override=YELLOW.
+        # Other (backfill) never shown live since statusline reflects active session.
+        $projBit = $null
+        if ($Cwd) {
+            $projectName = Split-Path $Cwd -Leaf
+            $cwdNorm = $Cwd.TrimEnd('\','/').ToLowerInvariant()
+            $projNorm = $projectName.ToLowerInvariant()
+            $isHome = $false
+            $hwLocal = if ($null -ne $config.weighting.home_weight) { [double]$config.weighting.home_weight } else { 1.0 }
+            $awLocal = if ($null -ne $config.weighting.active_weight) { [double]$config.weighting.active_weight } else { 0.7 }
+            $weightVal = $awLocal
+            $tierName = 'active'
+            $tierColor = $BCYAN
+            foreach ($h in @($config.weighting.homes)) {
+                if ($null -eq $h -or [string]::IsNullOrWhiteSpace([string]$h)) { continue }
+                $hNorm = ([string]$h).TrimEnd('\','/').ToLowerInvariant()
+                if ($hNorm -match '[\\/]') {
+                    if ($cwdNorm -eq $hNorm -or $cwdNorm.StartsWith($hNorm + '\') -or $cwdNorm.StartsWith($hNorm + '/')) { $isHome = $true; break }
+                } else {
+                    if ($projNorm -eq $hNorm) { $isHome = $true; break }
+                }
+            }
+            if ($isHome) { $weightVal = $hwLocal; $tierName = 'home'; $tierColor = $GREEN }
+            elseif ($config.weighting.project_overrides -and ($config.weighting.project_overrides.PSObject.Properties.Name -contains $projectName)) {
+                $weightVal = [double]$config.weighting.project_overrides.$projectName
+                $tierName = 'override'
+                $tierColor = $YELLOW
+            }
+            $projBit = "${GRAY_DARK}proj:${RESET}${tierColor}${projectName}${RESET}${GRAY_DARK}@${RESET}${tierColor}${weightVal}${RESET}"
+        }
+
         # Homes
         $homes = @($config.weighting.homes | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
         if ($homes.Count -eq 0) {
@@ -141,6 +174,7 @@ function Get-HaeStatusline {
         $counts = "${GRAY_DARK}sessions:${RESET}${YELLOW}$($todaySessions.Count)${RESET} ${GRAY_DARK}raw:${RESET}${YELLOW}${todayRecords}${RESET} ${GRAY_DARK}total:${RESET}${YELLOW}${totalRecords}${RESET}"
 
         $parts = @($brand, $cap, $counts, $homeBit, $profBit)
+        if ($projBit) { $parts += $projBit }
         if ($structCount -gt 0) { $parts += "${GRAY_DARK}str:${RESET}${MAGENTA}${structCount}${RESET}" }
         if ($hint) { $parts += "${GRAY_DARK}next:${RESET}${YELLOW}${hint}${RESET}" }
 
@@ -154,8 +188,16 @@ function Get-HaeStatusline {
 # Auto-invoke when run directly (not dot-sourced).
 # Detection: $MyInvocation.InvocationName equals '.' for dot-source, else direct.
 if ($MyInvocation.InvocationName -ne '.') {
+    $cwdFromStdin = $null
     if ([Console]::IsInputRedirected) {
-        $null = [Console]::In.ReadToEnd()
+        try {
+            $payload = [Console]::In.ReadToEnd()
+            if (-not [string]::IsNullOrWhiteSpace($payload)) {
+                $hook = $payload | ConvertFrom-Json
+                if ($hook.cwd) { $cwdFromStdin = [string]$hook.cwd }
+                elseif ($hook.workspace -and $hook.workspace.current_dir) { $cwdFromStdin = [string]$hook.workspace.current_dir }
+            }
+        } catch {}
     }
-    Write-Host -NoNewline (Get-HaeStatusline)
+    Write-Host -NoNewline (Get-HaeStatusline -Cwd $cwdFromStdin)
 }

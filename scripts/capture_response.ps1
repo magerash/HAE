@@ -59,8 +59,11 @@ try {
     $cwd = [string]$hook.cwd
     $projectName = if ($cwd) { Split-Path $cwd -Leaf } else { 'unknown' }
 
+    # 3-tier weighting: home / active (live, default) / override.
     $isHome = $false
-    $weight = [double]$config.weighting.other_weight
+    $activeWeight = if ($null -ne $config.weighting.active_weight) { [double]$config.weighting.active_weight } else { [double]$config.weighting.other_weight }
+    $weight = $activeWeight
+    $tier = 'active'
     if ($cwd) {
         $cwdNorm = $cwd.TrimEnd('\','/').ToLowerInvariant()
         $projNorm = $projectName.ToLowerInvariant()
@@ -77,8 +80,10 @@ try {
         }
         if ($isHome) {
             $weight = [double]$config.weighting.home_weight
+            $tier = 'home'
         } elseif ($config.weighting.project_overrides -and ($config.weighting.project_overrides.PSObject.Properties.Name -contains $projectName)) {
             $weight = [double]$config.weighting.project_overrides.$projectName
+            $tier = 'override'
         }
     }
 
@@ -114,6 +119,7 @@ try {
         project         = $projectName
         is_home_project = $isHome
         project_weight  = $weight
+        tier            = $tier
         response        = $assistantText
         response_chars  = $assistantText.Length
         hae_phase       = [int]$config.phase

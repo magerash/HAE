@@ -41,7 +41,8 @@ Data lives outside repo at `%USERPROFILE%\.hae\` (or `$env:HAE_DATA_DIR`):
 | `scripts/_lib.ps1` | shared helpers: `Get-HaeConfig`, `Resolve-HaeDataRoot`, `Get-Hae*Dir` | `patterns/data-root-resolution.md` |
 | `scripts/capture_prompt.ps1` | UserPromptSubmit hook, write raw JSONL | `features/capture.md`, `patterns/hot-path.md` |
 | `scripts/capture_response.ps1` | Stop hook, capture transcript tail | `features/capture.md` |
-| `scripts/install_plugin.ps1` | register / uninstall plugin (Copy or Junction) | `features/install.md`, `patterns/idempotent-installer.md` |
+| `scripts/install_plugin.ps1` | register / uninstall plugin (Copy or Junction); reads version from plugin.json | `features/install.md`, `patterns/idempotent-installer.md` |
+| `scripts/setup_data.ps1` | post-marketplace bootstrap: data dir + env + statusline | `features/install.md` |
 | `scripts/install_hooks.ps1` | legacy direct-hook install (no skills) | `features/install.md` |
 | `scripts/install_statusline.ps1` | install / preview / restore statusline | `features/statusline.md` |
 | `scripts/manage_homes.ps1` | list/add/remove/auto-detect home projects | `features/weighting.md` |
@@ -59,6 +60,7 @@ Data lives outside repo at `%USERPROFILE%\.hae\` (or `$env:HAE_DATA_DIR`):
 
 | Skill | Slash | Description | Chunk |
 |-------|-------|-------------|-------|
+| `skills/setup/SKILL.md` | `/hae:setup` | post-marketplace bootstrap (data dir + env + statusline) | `features/install.md` |
 | `skills/profile/SKILL.md` | `/hae:profile` | run questionnaires, persist to `profile/`, regen `persona.md` | `features/profile.md` |
 | `skills/status/SKILL.md` | `/hae:status` | capture stats + profile completeness dashboard | `features/profile.md` |
 | `skills/home/SKILL.md` | `/hae:home` | manage `weighting.homes` | `features/weighting.md` |

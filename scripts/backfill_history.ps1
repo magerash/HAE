@@ -99,8 +99,11 @@ foreach ($sf in $sessionFiles) {
     # Project weighting - tries 3 match strategies because Decode-ProjectDir is lossy
     # (slug uses '-' for both '\' and ' ', so 'C:\Projects\My habits' becomes
     # ambiguous '-C--Projects-My-habits').
+    # Backfilled records default to 'other' tier (historical, not currently active).
+    # Home matches still bump to home_weight - habits backfill stays high-weight.
     $isHome = $false
     $weight = [double]$config.weighting.other_weight
+    $tier = 'other'
     $cwdNorm = if ($cwdGuess) { $cwdGuess.TrimEnd('\','/').ToLowerInvariant() } else { '' }
     $projNorm = $projectName.ToLowerInvariant()
     $slugNorm = $projectSlug.ToLowerInvariant()
@@ -127,8 +130,10 @@ foreach ($sf in $sessionFiles) {
     }
     if ($isHome) {
         $weight = [double]$config.weighting.home_weight
+        $tier = 'home'
     } elseif ($config.weighting.project_overrides -and ($config.weighting.project_overrides.PSObject.Properties.Name -contains $projectName)) {
         $weight = [double]$config.weighting.project_overrides.$projectName
+        $tier = 'override'
     }
 
     $sessionRecords = @()
@@ -191,6 +196,7 @@ foreach ($sf in $sessionFiles) {
             project         = $projectName
             is_home_project = $isHome
             project_weight  = $weight
+            tier            = $tier
             hae_phase       = [int]$config.phase
             source          = 'backfill'
         }

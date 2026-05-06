@@ -4,6 +4,17 @@ Format: `### Changelog vX.Y.Z YYYY-MM-DD`. Style: professional, minimalistic. On
 
 ---
 
+### Changelog v0.4.2 2026-05-07
+
+**Release planning docs bootstrapped.** First /release-plan cycle on standalone repo. Twin pre-flight gate fired and applied operator conditions before scope lock.
+
+- **`docs/release/` tree** (5 files): `rice_backlog.md` (13 hypotheses scored R*I*C/E), `current_scope.md` (v0.5.0: H3 twin gates, H1 marketplace UI, H6 subdir CLAUDE.md, H8 report.ps1 chunk + formatter, H9 auto-promote homes, H14 forum user-pain hunt), `next_scope.md` (v0.6.0 forward look: H13 hook perf, H10 twin semantic, H12 v1.0 OSS), `research_queue.md` (RED H14 + H13, YELLOW H10 + H4, GREEN H5 + H11), `roadmap.md` (Q2-Q4 2026 trajectory, phase 5.5 consolidation, phase 6 cross-project intelligence).
+- **Twin pre-flight applied.** `before_user_approval` gate fired `scripts/twin.ps1`; twin pushed back on internal-only scope drift, cited override exemplar (My habits 2026-05-05 scope axis score 8) + operator principle "find insides in forum like reddit". Conditions accepted: H8 acceptance now mockup-first; H14 forum user-pain research added as RED-priority RA item. Banner flipped push-back -> approve.
+- **Health snapshot.** 17 PowerShell scripts (3 over 250 lines: report.ps1 316, classify.ps1 309, install_plugin.ps1 296 - within plugin tolerance). 10 skill files all under 100 lines. 1 TODO total. Chunks coverage complete except features/report.md (covered by H8).
+- No code, schema, or hook changes. Documentation + planning only.
+
+---
+
 ### Changelog v0.4.1 2026-05-06
 
 **Documentation chunks scaffolded.** Progressive-disclosure RAG-style chunk system added under `docs/chunks/`. Root CLAUDE.md stays small; topic-specific context loads on demand.

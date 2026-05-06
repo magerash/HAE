@@ -6,6 +6,7 @@ $ErrorActionPreference = 'SilentlyContinue'
 
 . "$(Split-Path -Parent $PSCommandPath)\_lib.ps1"
 $cfg = Get-HaeConfig
+$haeRoot = Resolve-HaeDataRoot
 
 # Raw tally - dedupes by record id (per-session file + combined daily file may both contain
 # the same record after /hae:consolidate; counting both would double-count).
