@@ -27,3 +27,5 @@ Thumbs.db
 !prompts/structured/.gitkeep
 !profile/.gitkeep
 !state/.gitkeep
+
+notes.md
