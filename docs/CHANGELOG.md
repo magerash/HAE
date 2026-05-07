@@ -4,6 +4,68 @@ Format: `### Changelog vX.Y.Z YYYY-MM-DD`. Style: professional, minimalistic. On
 
 ---
 
+### Changelog v0.5.0 2026-05-07
+
+**Wave 1 + Wave 2 of v0.5.0 release plan shipped.** Twin gate expansion, CLAUDE.md tightening, auto-promote homes, two RA research files. Wave 3 (H1 marketplace restructure + H8 code) deferred to v0.6.0 by operator default after H17 research surfaced 2.6x RICE bump for H1 (warrants own cycle).
+
+**Twin gates expansion (H3, RICE 24.0)**
+- `docs/chunks/patterns/twin-gate.md` (new) - reusable pattern doc for firing twin pre-flight gates from any RM-side mutation. Reference impl + question composition rules + audit trail format.
+- `.claude/commands/scope-review.md` - wires `on_scope_cut` + `on_mid_release_scope_add` gates between user decisions and file writes. Banner ⚠/✓ rendered above mutation; verdict appended to `current_scope.md` `twin_preflight:` list.
+- `.claude/commands/rice-score.md` - wires `on_backlog_add` gate (bonus). Twin sanity-checks RICE score before new hypothesis lands in backlog.
+- All gates default off in `config.default.json`; operator opts in via `<dataRoot>/config.json`. No restart needed (config re-read each fire).
+
+**CLAUDE.md tighten + chunk-breadcrumb pattern (H6, RICE 7.0, reframed)**
+- Original H6 ("subdir CLAUDE.md per feature area") reframed during planning per existing research at `docs/research/chunks/chunking_implementation_2026-05-06.md` line 27 (subdir CLAUDE.md was previously deferred as "low ROI for current size"). Reframe: tighten root CLAUDE.md + add chunk-breadcrumb table.
+- Root CLAUDE.md trimmed 240 -> 188 lines. Architecture section replaced with chunk pointer; Testing condensed; Privacy + Safety reduced to one-line summary linking to `features/redaction.md`.
+- New "Chunk Breadcrumbs" section maps tasks to chunks ("working on capture hook -> read features/capture.md, patterns/hot-path.md, features/redaction.md").
+- `docs/chunks/INDEX.md` mirrored breadcrumb table for machine-readable lookup.
+
+**Auto-promote homes wired (H9, RICE 4.2)**
+- `scripts/_homes_lib.ps1` (new) - shared library w/ `Get-ProjectRecordCounts`, `Test-AutoPromoteThreshold`, `Invoke-AutoPromote`, `Read-HaeUserConfig`, `Write-HaeUserConfig`. Dot-source from any caller.
+- `scripts/classify.ps1` - both `next-batch` and `append` subcommands now check threshold post-state-save; if `weighting.auto_promote.enabled=true` and qualifying projects exist, promote idempotently and log to `state/auto_promote.log` (one JSON line per promotion).
+- `scripts/status.ps1` - dashboard shows `auto_promote: ON/off`, pending candidates, audit log preview.
+- Hot path untouched (`capture_prompt.ps1` not modified). Config-gated; default off.
+- Acceptance: with `enabled=false` no writes happen; with `enabled=true` and a project crossing `min_records=100`, project appears in `weighting.homes` after next `/hae:classify` batch + new line in audit log.
+
+**report.ps1 formatter mockup (H8 phase 1, RICE 5.6)**
+- `docs/research/report_formatter_mockup_2026-05-07.md` (new) - markdown sketch of new report layout: TOC + section anchors + one-line takeaway blockquotes + trend tracking + reformatted exemplars table + blind-spot interpretation. Awaiting operator approval before code (mockup-first per twin pre-flight condition).
+
+**RA research outputs (H17 + H14)**
+- `docs/research/plugin_distribution_2026-05-07.md` (new, H17) - studied gstack, oh-my-claudecode, anthropics/claude-code, compound-engineering-plugin marketplace patterns. Confirmed `plugins/<name>/.claude-plugin/plugin.json` + root `marketplace.json` is the multi-plugin convention. Critical finding: HAE's plugin.json must explicitly declare hooks or marketplace install silently breaks them. Revisions: H1 RICE 11.2 -> 28.8 (effort 1.0w -> 0.5w; 2-4 hour task), H12 RICE 2.25 -> 7.2 (OSS path documented), H16 effort 2w -> 4w (PowerShell port underestimated).
+- `docs/research/forum_userpain_2026-05-07.md` (new, H14) - 19 sources (reddit, HN, GitHub issues, Substack, Mem0 report). 5 themes: context loss, cost opacity, agent decision opacity, undocumented model changes, data portability. 4 v0.6.0 candidates: H19 override-rate drift signal (RICE 26.7, near-free), H18 cost skill (14.4), H20 repetition classifier (5.6), H21 PostToolUse capture (3.0). 3 negative findings (rate limits, enterprise tracking, IDE integration are out of scope).
+
+**Backlog re-sort post-research**
+- New top 5 by RICE: H1 (28.8), H19 (26.7), H3 (24.0, shipped), H17 (20.0, researched), H18 (14.4).
+- 4 hypotheses added: H18, H19, H20, H21. 2 marked researched: H14, H17. 4 marked shipped-wave1: H3, H6, H8 mockup, H9.
+
+**Roadmap update**
+- v0.5.0 redefined as "wave 1+2 (twin signal density + doc tightening + research intake)".
+- v0.6.0 candidate list reordered: H1 (28.8) first, H19 (26.7) second, H18 (14.4) third, H12 (7.2) fourth, H8 code (5.6) fifth. Total estimated effort ~4.2w.
+
+**Notion sync**
+- v0.5.0 scope summary persisted to HAE Notion page child "Release Planning v0.5.0 - 2026-05-07" (https://www.notion.so/35890b0621e1818586dae1d0e3274ae6) earlier in cycle. Will refresh w/ shipped status note in next sync.
+
+**Files touched (committed)**
+- `.claude-plugin/plugin.json`, `config.default.json` - version bump 0.4.2 -> 0.5.0
+- `CLAUDE.md` - trim + breadcrumbs + version block
+- `docs/CHANGELOG.md` - this entry
+- `README.md` - status section
+- `docs/chunks/INDEX.md` - task->chunk crossref table
+- `docs/chunks/patterns/twin-gate.md` (new)
+- `docs/release/{current_scope,next_scope,research_queue,rice_backlog,roadmap}.md`
+- `scripts/_homes_lib.ps1` (new), `scripts/classify.ps1`, `scripts/status.ps1`
+
+**Files touched (gitignored, local only)**
+- `.claude/commands/scope-review.md` + `.claude/commands/rice-score.md` (H3 wiring)
+- `docs/research/report_formatter_mockup_2026-05-07.md` (H8 phase 1)
+- `docs/research/forum_userpain_2026-05-07.md` (H14)
+- `docs/research/plugin_distribution_2026-05-07.md` (H17)
+- These stay in source repo + installed plugin path; not pushed to GitHub.
+
+**Re-install required:** `.claude/commands/*.md` are loaded from installed plugin path. Run `scripts/install_plugin.ps1` (idempotent) after pull. Restart Claude Code.
+
+---
+
 ### Changelog v0.4.2 2026-05-07
 
 **Release planning docs bootstrapped.** First /release-plan cycle on standalone repo. Twin pre-flight gate fired and applied operator conditions before scope lock.

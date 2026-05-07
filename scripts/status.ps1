@@ -5,6 +5,7 @@
 $ErrorActionPreference = 'SilentlyContinue'
 
 . "$(Split-Path -Parent $PSCommandPath)\_lib.ps1"
+. "$(Split-Path -Parent $PSCommandPath)\_homes_lib.ps1"
 $cfg = Get-HaeConfig
 $haeRoot = Resolve-HaeDataRoot
 
@@ -107,6 +108,37 @@ if ($homes.Count -eq 0) {
     }
 }
 $lines += "- weights: home=$($cfg.weighting.home_weight)  other=$($cfg.weighting.other_weight)"
+
+# Auto-promote: report enable state + pending candidates (read-only check, no writes from status)
+$apEnabled = ($cfg.weighting.auto_promote -and $cfg.weighting.auto_promote.enabled -eq $true)
+$apTopN = if ($cfg.weighting.auto_promote.top_n) { [int]$cfg.weighting.auto_promote.top_n } else { 3 }
+$apMin  = if ($cfg.weighting.auto_promote.min_records) { [int]$cfg.weighting.auto_promote.min_records } else { 100 }
+$lines += "- auto_promote: $(if ($apEnabled) { "ON (top $apTopN, min_records $apMin)" } else { 'off' })"
+if ($apEnabled) {
+    try {
+        $pending = Test-AutoPromoteThreshold -MergedCfg $cfg
+        if ($pending.Count -gt 0) {
+            $names = ($pending | ForEach-Object { "$($_.project) ($($_.records))" }) -join ', '
+            $lines += "  - pending candidates: $names"
+        } else {
+            $lines += '  - no pending candidates (all qualifiers already in homes or under threshold)'
+        }
+    } catch {}
+}
+
+# Auto-promote audit log preview
+$apLogPath = "$haeRoot\state\auto_promote.log"
+if (Test-Path $apLogPath) {
+    $apLogLines = Get-Content $apLogPath -ErrorAction SilentlyContinue
+    if ($apLogLines.Count -gt 0) {
+        $lines += "  - audit log: $($apLogLines.Count) auto-promotion(s) recorded"
+        $lastLine = $apLogLines[$apLogLines.Count - 1]
+        try {
+            $last = $lastLine | ConvertFrom-Json
+            $lines += "    last: $($last.project) at $($last.ts) (trigger: $($last.trigger))"
+        } catch {}
+    }
+}
 $lines += ''
 $lines += '### Raw captures'
 if ($total -eq 0) {

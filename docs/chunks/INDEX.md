@@ -105,3 +105,24 @@ Stop             -> capture_response.ps1 -------------------------┤
 ```
 
 See `architecture/overview.md` for the full pipeline diagram.
+
+## Task -> chunks crossref
+
+When working on a topic, read the listed chunks before editing.
+
+| Working on... | Read also |
+|---------------|-----------|
+| capture hook (`capture_*.ps1`) | `features/capture.md`, `patterns/hot-path.md`, `features/redaction.md` |
+| classifier (`classify.ps1`) | `features/classify.md`, `architecture/classify-pipeline.md`, `patterns/jsonl-records.md` |
+| twin context (`twin.ps1`, `/hae:twin`) | `features/twin.md`, `architecture/twin-pipeline.md` |
+| twin gates (slash commands) | `patterns/twin-gate.md` |
+| profile (`profile/`, `/hae:profile`) | `features/profile.md`, `architecture/profile-system.md` |
+| weighting / homes (`manage_homes.ps1`) | `features/weighting.md` |
+| install / uninstall (`install_*.ps1`) | `features/install.md`, `patterns/idempotent-installer.md` |
+| statusline | `features/statusline.md` |
+| backfill (`backfill_history.ps1`) | `features/backfill.md` |
+| consolidate (`consolidate.ps1`) | `features/consolidate.md` |
+| record schema | `patterns/jsonl-records.md` |
+| data root resolution | `patterns/data-root-resolution.md` |
+| PowerShell conventions | `patterns/powershell-conventions.md` |
+| auto-promote homes | `features/weighting.md` (after H9), `features/classify.md` |

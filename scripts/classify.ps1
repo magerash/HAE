@@ -24,6 +24,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 . "$(Split-Path -Parent $PSCommandPath)\_lib.ps1"
+. "$(Split-Path -Parent $PSCommandPath)\_homes_lib.ps1"
 $cfg = Get-HaeConfig
 $rawDir = Get-HaeRawDir
 $structDir = Get-HaeStructuredDir
@@ -295,6 +296,20 @@ switch ($Subcommand.ToLowerInvariant()) {
             [Console]::Error.WriteLine("auto-classified: $autoCount ($bucketStr) | stop-skipped: $skippedCount | for LLM: $($batch.Count)")
         }
 
+        # Auto-promote check (off-hot-path, only if enabled). Idempotent. Audit logged.
+        try {
+            $promoCands = Test-AutoPromoteThreshold -MergedCfg $cfg
+            if ($promoCands.Count -gt 0) {
+                $promoAdded = Invoke-AutoPromote -Candidates $promoCands -Trigger 'classify-next-batch'
+                if ($promoAdded -gt 0) {
+                    $names = ($promoCands | Select-Object -First $promoAdded | ForEach-Object { $_.project }) -join ', '
+                    [Console]::Error.WriteLine("auto-promoted $promoAdded home(s): $names (audit: state/auto_promote.log)")
+                }
+            }
+        } catch {
+            [Console]::Error.WriteLine("auto-promote check failed: $($_.Exception.Message)")
+        }
+
         if ($batch.Count -eq 0) { '[]'; return }
         $batch.ToArray() | ConvertTo-Json -Depth 10 -Compress
     }
@@ -334,6 +349,20 @@ switch ($Subcommand.ToLowerInvariant()) {
             Write-Host "Categories: $catStr"
         }
         Write-Host "Total classified: $($classifiedIds.Count)"
+
+        # Auto-promote check (off-hot-path, only if enabled). Idempotent. Audit logged.
+        try {
+            $promoCands = Test-AutoPromoteThreshold -MergedCfg $cfg
+            if ($promoCands.Count -gt 0) {
+                $promoAdded = Invoke-AutoPromote -Candidates $promoCands -Trigger 'classify-append'
+                if ($promoAdded -gt 0) {
+                    $names = ($promoCands | Select-Object -First $promoAdded | ForEach-Object { $_.project }) -join ', '
+                    Write-Host "Auto-promoted $promoAdded home(s): $names (audit: state/auto_promote.log)"
+                }
+            }
+        } catch {
+            Write-Host "auto-promote check failed: $($_.Exception.Message)"
+        }
     }
 
     default {

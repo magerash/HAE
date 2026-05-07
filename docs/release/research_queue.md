@@ -12,8 +12,11 @@ Hypotheses needing analysis before RICE confidence is high enough to scope.
 
 | ID | Hypothesis | Priority | Question for RA | Output target |
 |----|------------|----------|-----------------|---------------|
+| H17 | Plugin distribution patterns | RED | How do top Claude Code plugins (gstack, oh-my-claudecode, codex plugin) structure their repos + marketplace.json + install UX? What's the cross-platform pattern? What's the OSS-publish playbook? | docs/research/plugin_distribution_2026-05-XX.md w/ side-by-side comparison table + recommended layout for HAE H1 + H12 |
 | H14 | Forum user-pain hypothesis hunt | RED | What pain points do real Claude Code / agent-observability users report on reddit + HN? Which 5+ map to HAE's domain? Which are addressable in v0.6.0 scope? | docs/research/forum_userpain_2026-05-XX.md w/ source thread links + HAE-relevance score per pain |
 | H13 | Persistent PS host for capture hot path | RED | Can a single PowerShell process serve N capture hook fires without state corruption on Windows 5.1? Latency budget achievable? Failure recovery cost? | docs/research/persistent_ps_host_2026-05-XX.md with go/no-go + RICE C revision |
+| H16 | Cross-platform install (macOS/Linux) | YELLOW | What changes needed to make HAE work on macOS + Linux? Bash/zsh equivalent for capture hooks? Path resolution (XDG_DATA_HOME vs %USERPROFILE%)? Which scripts are PowerShell-specific vs portable? Effort to port vs rewrite in node/python? | docs/research/cross_platform_install_2026-05-XX.md w/ port plan + RICE Effort revision |
+| H15 | Codex CLI integration | GREEN | Does Codex CLI expose UserPromptSubmit + Stop equivalent hooks? If yes, contract shape? If no, what's the wrapper alternative (PTY logging, daemon proxy)? Same data dir + schema works for cross-CLI captures? | docs/research/codex_integration_2026-05-XX.md w/ go/no-go + integration spec |
 | H10 | Twin semantic retrieval | YELLOW | Which embedding model fits offline + Windows + low cold-start? sqlite-vec vs lancedb vs flat numpy? Index size for 1670 records? | docs/research/twin_semantic_retrieval_2026-05-XX.md |
 | H4  | AST chunking (cAST) for code chunks | YELLOW | Does cAST improve chunk retrieval quality for HAE-style markdown + .ps1 hybrid corpus, or is current line-bounded approach sufficient? | docs/research/ast_chunking_eval_2026-05-XX.md |
 | H5  | Vector DB for chunk + exemplar retrieval | GREEN | Same engine for chunks + exemplars, or separate stores? Embedded vs server? | docs/research/vector_db_choice_2026-05-XX.md |
@@ -27,4 +30,7 @@ Hypotheses needing analysis before RICE confidence is high enough to scope.
 
 ## Recently completed research
 
-(none yet - queue bootstrapped 2026-05-07)
+| ID | Hypothesis | Completed | Output | Impact |
+|----|-----------|-----------|--------|--------|
+| H17 | Plugin distribution patterns | 2026-05-07 | docs/research/plugin_distribution_2026-05-07.md | H1 RICE 11.2->28.8, H12 RICE 2.25->7.2, H16 effort 2w->4w |
+| H14 | Forum user-pain hypothesis hunt | 2026-05-07 | docs/research/forum_userpain_2026-05-07.md | Added H18/H19/H20/H21 as v0.6.0 candidates |

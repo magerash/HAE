@@ -7,12 +7,14 @@ Long-term direction for the HAE plugin. Updated each /release-plan cycle.
 ### Q2 2026 (current)
 
 - **Done:** Phase 5 (release-manager loop integration + standalone repo + global cross-project install + Path A twin)
-- **Active:** v0.5.0 - twin signal density + install reach + forum user-pain intake (H3, H1, H6, H8, H9, H14)
-- **Next:** v0.6.0 - twin intelligence depth + hot-path perf + user-pain-driven items from H14 (H13, H10, H12 + TBD from H14)
+- **Active:** v0.5.0 wave 1+2 done - twin gates wired (H3), CLAUDE.md tightened (H6), report.ps1 mockup (H8 phase 1), auto-promote homes (H9), forum user-pain research (H14), plugin distribution research (H17). Awaiting CB.
+- **Next:** v0.6.0 - top by RICE: H1 marketplace UI install (28.8, deferred from v0.5.0), H19 override-rate drift signal (26.7, new from H14), H18 cost skill (14.4, new from H14), H12 v1.0 OSS release (7.2, post-H17), H8 code (5.6, post-mockup approval).
 
 ### Q3 2026 (planned)
 
 - v1.0.0 public OSS release (assumes H1 marketplace + H12 OSS prep ship in Q2)
+- Cross-platform install: macOS + Linux (H16) — unblocks non-Windows operators
+- Codex CLI integration (H15) if Codex hook contract available
 - Phase 6 entry: cross-project intelligence layer (H11, dashboards)
 - External user feedback loop established
 
@@ -40,6 +42,8 @@ Long-term direction for the HAE plugin. Updated each /release-plan cycle.
 - **R2:** Capture hot-path latency (470ms cold) may bite if Windows file I/O degrades. Research H13 RED priority.
 - **R3:** Single operator = thin signal; profile may overfit. Mitigation: keep behavioral calibration (`scripts/report.ps1`) trustworthy.
 - **R4:** Twin few-shot retrieval is keyword-based; may miss thematically relevant exemplars. Research H10 YELLOW priority.
+- **R5:** Windows-only install blocks macOS/Linux operators (zero reach there today). Research H16 YELLOW; impacts OSS release H12.
+- **R6:** HAE plugin layout may diverge from Claude Code marketplace conventions. Research H17 RED before H1 marketplace restructure to avoid rework.
 
 ## Out-of-scope (intentionally deferred)
 

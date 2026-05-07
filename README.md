@@ -4,7 +4,7 @@ Plugin that captures operator prompts + decisions across Claude Code sessions, b
 
 ## Status
 
-**v0.4.2 — Phases 0-5 done.** Capture live, classifier shipped, full operator profile, twin agent answering at medium-high confidence. Plugin in own dev repo with global cross-project install + shared data directory. v0.4.1 adds progressive-disclosure documentation chunks under `docs/chunks/`. v0.4.2 bootstraps release-planning docs under `docs/release/` (RICE backlog, current/next scope, research queue, roadmap) with first twin pre-flight cycle.
+**v0.5.0 — Phases 0-5 done; phase 5.5 active.** Capture live, classifier shipped, full operator profile, twin agent at medium-high confidence. Plugin in own dev repo with global cross-project install + shared data directory. v0.4.1 adds progressive-disclosure documentation chunks under `docs/chunks/`. v0.4.2 bootstraps release-planning docs under `docs/release/`. v0.5.0 ships wave 1+2 of the planning cycle: twin gates expansion (scope-review + rice-score wired), CLAUDE.md tightening (240->188 lines + chunk-breadcrumb pattern), auto-promote homes (`weighting.auto_promote.enabled` wired through classify post-batch trigger + status display + audit log), report.ps1 formatter mockup awaiting approval, two research files (plugin distribution + forum user-pain) producing 4 v0.6.0 candidates. H1 marketplace install deferred to v0.6.0 (RICE jumped to 28.8 post-research; warrants own cycle).
 
 ## Why
 
