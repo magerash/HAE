@@ -1,48 +1,50 @@
-# Next Release Scope - v0.6.0 (forward look)
+# Next Release Scope - v0.7.0 (forward look)
 
-**Theme:** Marketplace install ship + personal Anthropic-change detector + cost visibility + cross-platform + twin intelligence depth. Builds on v0.5.0 wave 1+2 (twin gates wired, docs tightened, auto-promote wired, two RA research files landed).
+**Theme:** Cross-platform reach + twin intelligence depth + capture audit trail. Picks up gated v0.6.0 items if they trip + remaining H14 forum-research candidates + research-unblocked items.
 
-## Candidate items (re-sorted post-research)
+## Candidate items
 
 | ID | Title | RICE | Owner | Status |
 |----|-------|------|-------|--------|
-| H1 | Marketplace UI install (`plugins/hae/` subdir + `marketplace.json` + plugin.json hooks declaration) | 28.8 | SA+OB | **Top** - deferred from v0.5.0 by operator default; H17 research complete; 2-4 hour task |
-| H19 | Override-rate drift signal in `/hae:status`: 4-week sparkline as personal Anthropic-change detector | 26.7 | OB | New from H14 forum research; near-free implementation; serves operator's evidence-dominant decision style |
-| H18 | `/hae:cost` skill: token spend tracker w/ additive schema (tokens_in, tokens_out, model) | 14.4 | OB+SA | New from H14; non-breaking schema additive; uses existing capture infrastructure |
-| H12 | v1.0.0 public OSS release | 7.2 | PM+SA | RICE up 3.2x post-H17; unblocked when H1 ships |
-| H8 code | report.ps1 formatter (post-mockup) | 5.6 | UI | Mockup approved -> implement TOC + section anchors + chunk |
-| H20 | Repetition-candidate classifier (prompts typed 10+ times) | 5.6 | OB | New from H14; classify-phase extension; no new infrastructure |
-| H16 | Cross-platform install (macOS + Linux paths, shell, hooks) | 5.0 | RA -> SA+OB | YELLOW research; effort revised to 4w post-H17 |
-| H13 | Capture hook perf: persistent PS host (470ms -> <100ms cold) | 4.0 | RA -> OB | RED research; needs feasibility spike |
-| H10 | Twin few-shot retrieval: semantic over keyword overlap | 3.2 | RA -> SA+OB | YELLOW research; H14 confirms keyword retrieval is industry-recognized failure mode (Mem0 report) |
-| H21 | PostToolUse hook capture + `/hae:trace` skill | 3.0 | OB+SA | New from H14; new hook binding; differentiated capability |
+| (carry) H12 | v1.0.0 public OSS release | 7.2 | PM+SA | Carried from v0.6.0 if Gate 1 trips |
+| (carry) H8 code | report.ps1 formatter (post-mockup) | 5.6 | UI | Carried from v0.6.0 if Gate 2 trips; mockup must approve before scope-in |
+| H20 | Repetition-candidate classifier (prompts typed 10+ times) | 5.6 | OB | Classify-phase extension; no new infrastructure |
+| H16 | Cross-platform install (macOS + Linux paths, shell, hooks) | 5.0 | RA -> SA+OB | YELLOW research needed before scope; 4.0w effort |
+| H13 | Capture hook perf: persistent PS host (470ms -> <100ms cold) | 4.0 | RA -> OB | RED research first |
+| H10 | Twin few-shot retrieval: semantic over keyword overlap | 3.2 | RA -> SA+OB | YELLOW research; H14 confirms keyword retrieval is industry-recognized failure mode |
+| H21 | PostToolUse hook capture + `/hae:trace <session-id>` skill | 3.0 | OB+SA | Schema additive; new hook binding |
 | H15 | Codex CLI integration | 2.56 | RA -> OB | GREEN research; depends on Codex hook contract |
 
 ## Pre-conditions
 
-- v0.5.0 H8 mockup approval (operator review of `docs/research/report_formatter_mockup_2026-05-07.md`) before H8 code starts
-- H1 must ship before H12 can be scoped
-- H13, H10 research files needed before they can move to scope
-- H18 + H21 require schema additive (`tokens_in`, `tokens_out`, `model` for H18; tool-call event fields for H21) - bump schema `$id` if breaking; document migration
+- v0.6.0 close determines carry-overs (H12 + H8 code)
+- H13 RED research must complete before scope lock
+- H16 + H10 YELLOW research recommended before scope lock
+- H18 schema changes (from v0.6.0) determine whether H21's tool-call event fields can also be additive or require breaking bump
 
-## Suggested v0.6.0 scope (top 5 by RICE)
+## Suggested v0.7.0 scope (assuming both v0.6.0 gates clear)
 
-1. **H1** marketplace install (28.8) - 0.5w
-2. **H19** override-rate drift signal (26.7) - 0.3w (likely fastest impact-per-effort item in the entire backlog)
-3. **H18** `/hae:cost` skill (14.4) - 0.5w
-4. **H12** v1.0 OSS release (7.2) - 2.5w
-5. **H8 code** report.ps1 formatter (5.6) - 0.4w
+If H12 + H8 code ship in v0.6.0:
+1. **H20** repetition classifier (5.6) - 0.5w
+2. **H21** PostToolUse capture (3.0) - 2.0w
+3. **H13** hook perf (post-research) - 2.0w
+4. **H16** cross-platform (post-research) - 4.0w (or split: research + initial bash port)
 
-**Total estimated effort:** ~4.2w. Re-rank via `/release-plan` when v0.5.0 closes.
+Total: ~8.5w. Aggressive cycle; likely needs trimming based on research outcomes.
 
-## Likely scope cuts if effort overruns
+## Suggested v0.7.0 scope (if v0.6.0 gates trip)
 
-- H12 OSS (largest E=2.5w; can defer to v0.7.0 if H1 reveals additional work)
-- H8 code (mockup may surface scope expansion the operator wants in v0.7.0)
+If H12 + H8 code carry over:
+1. **H12** v1.0 OSS (carry, 2.5w)
+2. **H8 code** report formatter (carry, 0.4w)
+3. **H20** repetition classifier (5.6, 0.5w)
+4. **H13** hook perf (post-research, 2.0w if go)
+
+Total: ~5.4w. More realistic.
 
 ## Forward signals to watch
 
-- H1 ships -> immediate path to OSS publish (H12) and external user signals
-- Operator override rate trending up post-deploy of any new feature -> H10 priority increases
-- Capture hook timing showing >1s tail under sustained load -> promote H13 to v0.6.0 patch
-- H19 surfaces undocumented model change -> validates the personal-Anthropic-change-detector value prop, drives H12 messaging
+- H1 ships clean -> H12 keeps schedule, OSS Q3 trajectory holds
+- H19 surfaces undocumented model change -> validates personal-Anthropic-change-detector value prop, drives H12 messaging
+- H18 schema additive merges cleanly -> H21 schema work follows same pattern
+- H1 reveals plugin.json edge cases -> trigger H7 (install_plugin.ps1 refactor, RICE 1.6) promotion to scope

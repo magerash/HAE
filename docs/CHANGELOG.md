@@ -4,6 +4,74 @@ Format: `### Changelog vX.Y.Z YYYY-MM-DD`. Style: professional, minimalistic. On
 
 ---
 
+### Changelog v0.6.0 2026-05-10
+
+**Marketplace UI install + personal Anthropic-change detector + cost visibility.** Three top-RICE items shipped in single overnight session per /release-plan v0.6.0 scope locked 2026-05-10. Repo restructured to standard plugin convention; new metrics + cost surface make HAE distinguishable from generic capture tools.
+
+**H1 marketplace UI install (RICE 28.8)**
+- Repo restructured: plugin source moved from root to `plugins/hae/` subdir. `.claude-plugin/marketplace.json` added at repo root (catalog: single plugin `hae` pointing to `./plugins/hae`). `plugins/hae/.claude-plugin/plugin.json` declares component paths (`hooks` -> `./hooks/hooks.json`, `commands` -> `./commands`, `agents` -> `./agents`, `skills` -> `./skills`) per H17 RA research finding (without explicit declarations, marketplace install would silently break hook bindings).
+- `.claude/commands/release-plan.md`, `scope-review.md`, `rice-score.md` moved to `plugins/hae/commands/` (plugin convention). `.claude/agents/*.md` (release-team agents) merged into `plugins/hae/agents/` alongside `hae-twin.md`. Project-level `.claude/` (gitignored) retained at repo root for operator's project-specific Claude Code config (e.g. speech-to-prompt, settings.local.json).
+- `plugins/hae/scripts/install_plugin.ps1` auto-detects new layout from `$PSCommandPath` walking up two levels. No path-arg needed for default invocation. Backwards-compat fallback handles pre-v0.6.0 flat layout if found at repo root.
+- Smoke-tested locally: install + capture record landed within 1s. Marketplace UI install (`/plugin marketplace add Magerash/HAE`) requires GitHub push to test (this commit).
+- README + INSTALL doc + `docs/chunks/features/install.md` updated for new layout. Three install paths documented: marketplace UI (recommended), local install script (Windows-only / dev mode), legacy hook-only (fallback).
+
+**H19 override-rate drift signal (RICE 26.7)**
+- New `plugins/hae/scripts/_metrics_lib.ps1`. `Get-OverrideRateDrift -WindowWeeks 4` returns trailing-4-week vs prior-4-week override counts (overall + per-axis) plus delta + alert tag (none/mild/strong based on +/-50% / +/-100% thresholds). `Format-Sparkline` renders numeric series as 5-grade ASCII (` . - = # *`). Pure functions; no side effects. ASCII-only per CLAUDE.md.
+- `status.ps1` dashboard adds "Override-rate drift" section between Raw captures and Structured. Shows overall sparkline + delta + alert tag, per-axis breakdown (sorted by recent count desc), legend.
+- Live data on operator's structured pool: +294% overall drift recent 4w vs prior 4w (recent 71 vs prior 18). Per-axis: evidence +2400% (recent 25 vs prior 1), scope +700%, priority +500%, approach +113%. Validates personal-Anthropic-change-detector value prop H14 forum research surfaced.
+
+**H18 token-spend tracker (RICE 14.4)**
+- H18 RA research output at `docs/research/h18_token_source_2026-05-10.md` (gitignored): hook payloads carry zero token data; transcript JSONL `assistant` records carry `message.usage` + `message.model` inline on every API response. Approach A (extract from existing transcript-tail loop in Stop hook) selected over B/C/D options per latency budget + minimal effort.
+- `plugins/hae/scripts/capture_response.ps1` extends transcript-tail loop to also extract usage + model when present. Try/catch guarded; absent fields default to null. Last-wins (chronological) within tail.
+- New `capture.include_tokens` config flag, default true. Privacy-preserving: when `include_response=false` (operator default) but `include_tokens=true`, writes slim `event=StopTokens` record with token fields + meta only (NO response text). When `include_response=true`, full record with both. When both false, no Stop-hook write.
+- Schema additive: 4 new optional fields (`tokens_out`, `tokens_cache_read`, `tokens_cache_create`, `model`) + `tokens_in` updated to nullable + descriptions. Schema `$id` bumped to `hae/record.schema.json#v0.6.0` for traceability. Old records remain valid (no required-field changes).
+- New `plugins/hae/scripts/cost.ps1` aggregates by week + project + model tier. Pricing table baked in (Opus/Sonnet/Haiku 2026 rates per 1M tokens). Outputs weekly sparkline + table + per-project breakdown + per-tier breakdown. JSON mode for machine output. Filter by project. Configurable window (default 8 weeks).
+- New `plugins/hae/skills/cost/SKILL.md` exposes `/hae:cost` slash command.
+- New `docs/chunks/features/cost.md` (chunk format compliant): pipeline, key functions, code patterns, common issues, cross-references.
+- Smoke-test: synthetic Stop hook fire against a real transcript -> StopTokens record with `tokens_in=1, tokens_out=590, cache_read=112148, cache_create=296, model=claude-opus-4-7`. cost.ps1 -Weeks 4 yielded $0.2180 for that record (Opus pricing math: 1*15/1M + 590*75/1M + 112148*1.5/1M + 296*18.75/1M = $0.218). Validated.
+
+**H17 + H14 RA research (carry-forward from v0.5.0 plan)**
+- `docs/research/plugin_distribution_2026-05-07.md` (gitignored, local-only). Studied gstack, oh-my-claudecode, anthropics/claude-code, compound-engineering-plugin layouts. Confirmed `plugins/<name>/.claude-plugin/plugin.json` + root `marketplace.json` is multi-plugin convention. Critical hook-declaration finding drove H1 plugin.json shape.
+- `docs/research/forum_userpain_2026-05-07.md` (gitignored, local-only). 19 sources. 5 pain themes: context loss (P1, P8), cost opacity (P2, P4, P6), agent decision opacity (P5, P9), undocumented model changes (P3), data portability (P7). 4 v0.6.0+ candidates: H19 (shipped this release), H18 (shipped this release), H20 (deferred to v0.7.0), H21 (deferred to v0.7.0). 3 negative findings (rate limits, enterprise tracking, IDE integration) explicitly marked out of scope.
+
+**Twin gates wiring (carry-forward from v0.5.0 wave 1)**
+- `plugins/hae/commands/scope-review.md` wires `on_scope_cut` + `on_mid_release_scope_add` gates. `plugins/hae/commands/rice-score.md` wires `on_backlog_add`. Pattern doc at `docs/chunks/patterns/twin-gate.md`.
+- All gates default off in `config.default.json`; operator opts in via user config. No restart needed (config re-read each fire).
+
+**CLAUDE.md tightening (carry-forward from v0.5.0 wave 1)**
+- Root CLAUDE.md trimmed 240 -> 188 lines. Chunk-breadcrumb table added. INDEX.md mirrors task->chunk crossref.
+- Per existing chunking research, subdir CLAUDE.md was deferred ("low ROI for current size"); reframed as breadcrumb pattern.
+- Note: CLAUDE.md is now gitignored per operator preference (plus `CLAUDE_.md` operator-local working copy).
+
+**Auto-promote homes (carry-forward from v0.5.0 wave 1)**
+- New `plugins/hae/scripts/_homes_lib.ps1` with `Get-ProjectRecordCounts`, `Test-AutoPromoteThreshold`, `Invoke-AutoPromote`. classify.ps1 post-batch trigger when `weighting.auto_promote.enabled=true`. status.ps1 shows pending candidates + audit log preview. Audit log at `state/auto_promote.log`.
+
+**Health snapshot at v0.6.0 ship**
+- 18 PowerShell scripts (added cost.ps1 + _homes_lib.ps1 + _metrics_lib.ps1). 5 over 200 lines (classify 336, report 316, install_plugin 296, backfill 230, manage_homes 215). Within plugin tolerance.
+- 11 skills (added cost). All under 100 lines each.
+- 11 feature chunks (added cost.md).
+- 6 patterns chunks (added twin-gate.md).
+- Schema bumped to `#v0.6.0` (additive only; no breaking changes).
+- 1 TODO total (`classify_nightly.ps1` line 31, pre-existing Phase 3 stub).
+
+**Files (committed)**
+- Root: `.claude-plugin/marketplace.json` (new), `.gitignore` (revised), `README.md`, `INSTALL.md`, `docs/CHANGELOG.md`, `docs/chunks/INDEX.md`, `docs/chunks/features/install.md`, `docs/chunks/features/cost.md` (new), `docs/chunks/patterns/twin-gate.md` (new), `docs/release/{current,next,roadmap,rice_backlog,research_queue}_*.md`.
+- Plugin (renamed from root): `plugins/hae/{agents,hooks,scripts,skills,schema,tests,commands,config.default.json,config.user.example.json,.claude-plugin/plugin.json}` (git mv preserves history).
+- Plugin (modified): `plugins/hae/scripts/{capture_response,classify,status}.ps1`, `plugins/hae/config.default.json`, `plugins/hae/schema/record.schema.json`.
+- Plugin (new): `plugins/hae/scripts/{_homes_lib,_metrics_lib,cost}.ps1`, `plugins/hae/skills/cost/SKILL.md`.
+- Deletion: `CLAUDE.md` (superseded by `CLAUDE_.md` operator-local; both gitignored).
+
+**Files (gitignored, local-only - not pushed)**
+- `.claude/commands/speech-to-prompt.md` (gstack), `.claude/settings.local.json` (operator settings).
+- `docs/research/{plugin_distribution,forum_userpain,h18_token_source,report_formatter_mockup}_*.md` (research files; operator chose to keep `docs/research/` gitignored).
+- `CLAUDE_.md`, `CLAUDE.md` (operator instructions; both gitignored).
+
+**Re-install required:** plugin source moved + new files. Run `plugins/hae/scripts/install_plugin.ps1` (idempotent) after pull. Restart Claude Code. Verify `/plugin list` reports `hae@hae-local` enabled and 0 errors.
+
+**Marketplace UI install:** with this commit on GitHub, `/plugin marketplace add Magerash/HAE` + `/plugin install hae@hae` + `/hae:setup` should work end-to-end. Validate on a fresh machine.
+
+---
+
 ### Changelog v0.5.0 2026-05-07
 
 **Wave 1 + Wave 2 of v0.5.0 release plan shipped.** Twin gate expansion, CLAUDE.md tightening, auto-promote homes, two RA research files. Wave 3 (H1 marketplace restructure + H8 code) deferred to v0.6.0 by operator default after H17 research surfaced 2.6x RICE bump for H1 (warrants own cycle).

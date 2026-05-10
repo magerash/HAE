@@ -1,11 +1,13 @@
 {
     "_doc":  "HAE plugin defaults. Committed to dev repo. Universal across all users. Operator-private fields (homes, project_overrides, statusline.previous_command) live in user config.json in data dir.",
-    "version":  "0.5.0",
+    "version":  "0.6.0",
     "phase":  5,
     "scope":  "global-cross-project",
     "capture":  {
                     "enabled":  true,
                     "include_response":  false,
+                    "include_tokens":  true,
+                    "_doc_include_tokens":  "v0.6.0+ (H18). When true and Stop hook fires, writes a slim cost-record (tokens_in/out/cache_*+model+ts+project, NO response text) even if include_response=false. Default true: tokens are not PII; cost tracking valuable. Set false to fully disable Stop-hook writes.",
                     "max_prompt_chars":  50000,
                     "redact_patterns":  [
                                             "(?i)password\\s*[:=]\\s*\\S+",

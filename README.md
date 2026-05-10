@@ -4,7 +4,7 @@ Plugin that captures operator prompts + decisions across Claude Code sessions, b
 
 ## Status
 
-**v0.5.0 — Phases 0-5 done; phase 5.5 active.** Capture live, classifier shipped, full operator profile, twin agent at medium-high confidence. Plugin in own dev repo with global cross-project install + shared data directory. v0.4.1 adds progressive-disclosure documentation chunks under `docs/chunks/`. v0.4.2 bootstraps release-planning docs under `docs/release/`. v0.5.0 ships wave 1+2 of the planning cycle: twin gates expansion (scope-review + rice-score wired), CLAUDE.md tightening (240->188 lines + chunk-breadcrumb pattern), auto-promote homes (`weighting.auto_promote.enabled` wired through classify post-batch trigger + status display + audit log), report.ps1 formatter mockup awaiting approval, two research files (plugin distribution + forum user-pain) producing 4 v0.6.0 candidates. H1 marketplace install deferred to v0.6.0 (RICE jumped to 28.8 post-research; warrants own cycle).
+**v0.6.0 — Phases 0-5 done; phase 5.5 active.** Capture live, classifier shipped, full operator profile, twin agent at medium-high confidence. v0.6.0 ships H1 marketplace UI install (repo restructure to `plugins/hae/` + `.claude-plugin/marketplace.json` at root + plugin.json declares hooks/commands/agents/skills paths; `/plugin marketplace add Magerash/HAE` now works), H19 override-rate drift signal (4-week sparkline in `/hae:status` overall + per-axis as personal Anthropic-change detector), H18 cost skill (`/hae:cost` with schema additive `tokens_in/out/cache_read/cache_create/model`, slim StopTokens record privacy-preserving, Opus/Sonnet/Haiku 2026 pricing). H17 + H14 RA research informed scope. H8 code + H12 OSS pending operator decisions.
 
 ## Why
 
@@ -16,19 +16,29 @@ HAE is a global cross-project plugin. One install, captures from every project's
 
 ### Claude Code
 
+**Option A: Marketplace UI (recommended, v0.6.0+):**
+
+```
+/plugin marketplace add Magerash/HAE
+/plugin install hae@hae
+/hae:setup
+```
+
+Three commands. Claude Code clones the repo, registers the marketplace, installs the plugin, runs the setup skill to bootstrap the data dir + `HAE_DATA_DIR` env + statusline.
+
+**Option B: Local install script (Windows-only, suits dev/junction mode):**
+
 ```powershell
 git clone https://github.com/Magerash/HAE C:\Projects\HAE
-powershell -File C:\Projects\HAE\scripts\install_plugin.ps1 -PersistEnv
+powershell -File C:\Projects\HAE\plugins\hae\scripts\install_plugin.ps1 -PersistEnv
 # restart Claude Code
 ```
 
-Installer copies plugin to `C:\Plugins\hae`, registers a local marketplace (`hae-local`), bootstraps `%USERPROFILE%\.hae\` data dir, persists `HAE_DATA_DIR` env, and rewires statusline. Idempotent.
+Copies the plugin to `C:\Plugins\hae` (default; `-CopyTo` to override), registers a local marketplace (`hae-local`), bootstraps `%USERPROFILE%\.hae\` data dir, persists `HAE_DATA_DIR` env, rewires statusline. Idempotent.
 
-If you ever skip the installer (e.g. manual file copy), run `/hae:setup persist` to bootstrap data dir + env + statusline.
+If you skip the installer, run `/hae:setup` to bootstrap data dir + env + statusline.
 
 See `INSTALL.md` for `-CopyTo`, `-DataDir`, `-Mode Junction` (live dev), and uninstall details.
-
-> **Note:** GitHub-marketplace install (`/plugin marketplace add Magerash/HAE`) requires a repo-layout refactor (plugin -> `plugins/hae/`, marketplace -> `.claude-plugin/marketplace.json`). Tracked as future work; current single-plugin layout cannot host both manifests in `.claude-plugin/` simultaneously.
 
 ### Codex CLI
 
@@ -56,41 +66,51 @@ Run `/plugin list` after install — `hae@hae-local` (or `hae@hae`) should appea
 
 ## Layout
 
-**Plugin source (this repo, e.g. `C:\Projects\HAE\`):**
+**Repo layout (v0.6.0+):**
 
 ```
-HAE/
+HAE/                              # repo root
 ├── .claude-plugin/
-│   └── plugin.json               # plugin manifest (single-plugin layout; no marketplace.json yet)
+│   └── marketplace.json          # marketplace catalog (single plugin: hae)
 ├── README.md
-├── INSTALL.md                    # install guide (Copy mode default, Junction for dev)
-├── CHANGELOG.md
-├── CLAUDE.md                     # AI instructions for working in this repo
-├── config.default.json           # universal defaults (committed): capture, redact, classifier, twin gates
-├── config.user.example.json      # template for operator-private user config
-├── .gitignore
-├── hooks/hooks.json              # hook bindings using ${CLAUDE_PLUGIN_ROOT}
-├── scripts/
-│   ├── _lib.ps1                  # shared helper (Resolve-HaeDataRoot, Get-HaeConfig, etc)
-│   ├── capture_prompt.ps1        # UserPromptSubmit hook
-│   ├── capture_response.ps1      # Stop hook
-│   ├── classify.ps1              # Phase 3 classifier
-│   ├── twin.ps1                  # Phase 4 twin context composer
-│   ├── consolidate.ps1
-│   ├── backfill_history.ps1
-│   ├── manage_homes.ps1          # writes to user config in data dir
-│   ├── status.ps1
-│   ├── statusline.ps1
-│   ├── statusline_universal.ps1
-│   ├── install_statusline.ps1
-│   ├── report.ps1
-│   ├── install_plugin.ps1        # full install: marketplace + Copy + bootstrap
-│   ├── setup_data.ps1            # post-marketplace bootstrap (data dir + env + statusline)
-│   └── install_hooks.ps1         # legacy direct-hook installer
-├── schema/record.schema.json
-├── tests/                        # questionnaire banks (committed)
-├── agents/hae-twin.md            # subagent spec
-└── skills/                       # /hae:* slash commands
+├── INSTALL.md
+├── docs/
+│   ├── CHANGELOG.md
+│   ├── chunks/                   # progressive-disclosure documentation
+│   ├── release/                  # RICE backlog, scope, roadmap
+│   └── research/                 # research files (gitignored by default)
+├── plugins/
+│   └── hae/                      # plugin source (CLAUDE_PLUGIN_ROOT after install)
+│       ├── .claude-plugin/
+│       │   └── plugin.json       # manifest (declares hooks/commands/agents/skills paths)
+│       ├── config.default.json   # universal defaults: capture, redact, classifier, twin gates
+│       ├── config.user.example.json  # template for operator-private user config
+│       ├── hooks/hooks.json      # hook bindings using ${CLAUDE_PLUGIN_ROOT}
+│       ├── commands/             # slash commands (release-plan, scope-review, rice-score)
+│       ├── agents/               # subagent specs (hae-twin + release team: SA/OB/UI/QA/PM/RM/CA/RA)
+│       ├── skills/               # /hae:* slash commands
+│       ├── scripts/
+│       │   ├── _lib.ps1                # config + path resolution helpers
+│       │   ├── _homes_lib.ps1          # auto-promote homes helpers
+│       │   ├── _metrics_lib.ps1        # override-rate drift + sparkline
+│       │   ├── capture_prompt.ps1      # UserPromptSubmit hook
+│       │   ├── capture_response.ps1    # Stop hook
+│       │   ├── classify.ps1            # Phase 3 classifier
+│       │   ├── twin.ps1                # Phase 4 twin context composer
+│       │   ├── consolidate.ps1
+│       │   ├── backfill_history.ps1
+│       │   ├── manage_homes.ps1
+│       │   ├── status.ps1              # /hae:status dashboard (with override-rate drift)
+│       │   ├── statusline.ps1
+│       │   ├── statusline_universal.ps1
+│       │   ├── install_statusline.ps1
+│       │   ├── report.ps1
+│       │   ├── install_plugin.ps1      # full install: marketplace + Copy + bootstrap
+│       │   ├── setup_data.ps1          # post-marketplace bootstrap
+│       │   └── install_hooks.ps1       # legacy direct-hook installer
+│       ├── schema/record.schema.json
+│       └── tests/                # questionnaire banks
+└── .gitignore
 ```
 
 **Operator data dir (default `%USERPROFILE%\.hae\`, override via `$env:HAE_DATA_DIR`):**

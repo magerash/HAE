@@ -1,15 +1,27 @@
 # INSTALL
 
-Two install paths: (A) full bootstrap script for Claude Code, (B) Codex CLI (coming soon).
+Three install paths: (A) marketplace UI (recommended), (B) full bootstrap script, (C) Codex CLI (coming soon).
 
-## A. Claude Code — full bootstrap script
+## A. Claude Code marketplace UI (recommended, v0.6.0+)
+
+```
+/plugin marketplace add Magerash/HAE
+/plugin install hae@hae
+/hae:setup
+```
+
+Three slash commands. Claude Code clones the repo, registers the marketplace from `.claude-plugin/marketplace.json`, installs the `hae` plugin from `plugins/hae/`, then `/hae:setup` bootstraps the `%USERPROFILE%\.hae\` data dir + `HAE_DATA_DIR` env + statusline.
+
+Re-run `/hae:setup` after any Claude Code update that resets settings.json.
+
+## B. Local install script (Windows-only, suits dev / junction mode)
 
 ```powershell
 # 1. Clone the dev repo
 git clone https://github.com/Magerash/HAE C:\Projects\HAE
 
 # 2. Run installer (default: Copy to C:\Plugins\hae, data at %USERPROFILE%\.hae)
-powershell -File C:\Projects\HAE\scripts\install_plugin.ps1 -PersistEnv
+powershell -File C:\Projects\HAE\plugins\hae\scripts\install_plugin.ps1 -PersistEnv
 
 # 3. Restart Claude Code
 ```
@@ -17,7 +29,7 @@ powershell -File C:\Projects\HAE\scripts\install_plugin.ps1 -PersistEnv
 Capture starts on next prompt. Data lands in `%USERPROFILE%\.hae\prompts\raw\` from any project's Claude Code session.
 
 The installer:
-1. Robocopies plugin source -> `C:\Plugins\hae` (or `-CopyTo <path>`).
+1. Robocopies plugin source from `plugins/hae/` -> `C:\Plugins\hae` (or `-CopyTo <path>`).
 2. Creates local marketplace `hae-local` with junction to install dir.
 3. Registers in `~/.claude/plugins/{known_marketplaces,installed_plugins}.json`.
 4. Enables `hae@hae-local` in `~/.claude/settings.json`.
@@ -25,11 +37,11 @@ The installer:
 6. Persists `HAE_DATA_DIR` env (with `-PersistEnv`).
 7. Rewires statusline to plugin's `statusline_universal.ps1`.
 
-If steps 5-7 ever drift out of sync (e.g. settings.json reset by Claude Code update), run `/hae:setup persist` or `scripts/setup_data.ps1 -PersistEnv` to re-bootstrap.
+If steps 5-7 ever drift out of sync (e.g. settings.json reset by Claude Code update), run `/hae:setup` or `scripts/setup_data.ps1 -PersistEnv` to re-bootstrap.
 
-> **Note:** GitHub-marketplace install (`/plugin marketplace add Magerash/HAE`) is *not* supported in current repo layout. Claude Code refuses to load a plugin when both `marketplace.json` and `plugin.json` co-exist in the same `.claude-plugin/` dir. Future work: split into `plugins/hae/` subdir.
+Use Path B over Path A when you need `-Mode Junction` (live dev — install junctions to source repo, edits visible immediately) or non-default `-CopyTo` / `-DataDir` paths.
 
-## B. Codex CLI
+## C. Codex CLI
 
 *Coming soon.* Codex CLI capture lands when Codex exposes equivalent `UserPromptSubmit` / `Stop` hook events. The data dir + redaction pipeline + twin agent are CLI-agnostic — the only missing piece is the hook contract.
 

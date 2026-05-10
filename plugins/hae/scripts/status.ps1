@@ -6,6 +6,7 @@ $ErrorActionPreference = 'SilentlyContinue'
 
 . "$(Split-Path -Parent $PSCommandPath)\_lib.ps1"
 . "$(Split-Path -Parent $PSCommandPath)\_homes_lib.ps1"
+. "$(Split-Path -Parent $PSCommandPath)\_metrics_lib.ps1"
 $cfg = Get-HaeConfig
 $haeRoot = Resolve-HaeDataRoot
 
@@ -166,6 +167,33 @@ if ($total -eq 0) {
     }
 }
 $lines += ''
+$lines += '### Override-rate drift (4-week trailing vs prior 4-week baseline)'
+try {
+    $drift = Get-OverrideRateDrift -WindowWeeks 4
+    if ($drift.weeks_count -eq 0 -or ($drift.recent_4w_total + $drift.prior_4w_total) -eq 0) {
+        $lines += '- (no overrides recorded yet; need /hae:classify pass)'
+    } else {
+        $alertTag = switch ($drift.alert) { 'strong' { '[ALERT]' } 'mild' { '[watch]' } default { '' } }
+        $deltaStr = if ($null -eq $drift.delta_pct) { 'n/a' } else { "{0:+0.0;-0.0;0}%" -f $drift.delta_pct }
+        $lines += ("- Overall:  {0}  recent {1} vs prior {2}, delta {3} {4}  {5}" -f $drift.sparkline_overall, $drift.recent_4w_total, $drift.prior_4w_total, $drift.delta, $deltaStr, $alertTag).TrimEnd()
+        if ($drift.axes.Count -gt 0) {
+            $lines += '- By axis:'
+            foreach ($a in $drift.axes) {
+                $axSeries = $drift.per_axis[$a]
+                $axRecent = ($axSeries[-$drift.window_weeks..-1] | Measure-Object -Sum).Sum
+                $axPrior  = ($axSeries[0..($drift.window_weeks-1)] | Measure-Object -Sum).Sum
+                $axDelta  = $axRecent - $axPrior
+                $axDPct   = if ($axPrior -gt 0) { "{0:+0.0;-0.0;0}%" -f ([math]::Round((($axRecent - $axPrior) / $axPrior) * 100, 1)) } else { 'n/a' }
+                $lines += ("    {0,-12} {1}  recent {2} vs prior {3} (delta {4} {5})" -f $a, $drift.sparkline_per_axis[$a], $axRecent, $axPrior, $axDelta, $axDPct)
+            }
+        }
+        $lines += "  legend: sparkline grades=' . - = # *' (5 levels by max in series); recent on right"
+    }
+} catch {
+    $lines += "- (drift signal unavailable: $($_.Exception.Message))"
+}
+$lines += ''
+
 $lines += '### Structured'
 if ($structCount -eq 0) {
     $lines += '- 0 records - run /hae:classify (Phase 3 stub for now)'

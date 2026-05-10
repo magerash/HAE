@@ -10,7 +10,18 @@ try {
     . "$(Split-Path -Parent $PSCommandPath)\_lib.ps1"
     $config = Get-HaeConfig
     if (-not $config -or -not $config.capture -or -not $config.capture.enabled) { exit 0 }
-    if (-not $config.capture.include_response) { exit 0 }
+
+    # Two write modes:
+    #   - include_response=true  : full record w/ response text + tokens (privacy-permitting)
+    #   - include_response=false + include_tokens=true (default v0.6.0+): slim cost-record (tokens + meta only, NO response text)
+    #   - include_response=false + include_tokens=false : skip entirely
+    $writeMode = 'skip'
+    if ($config.capture.include_response) {
+        $writeMode = 'full'
+    } elseif ($null -eq $config.capture.include_tokens -or $config.capture.include_tokens -eq $true) {
+        $writeMode = 'tokens'
+    }
+    if ($writeMode -eq 'skip') { exit 0 }
 
     $ms = New-Object System.IO.MemoryStream
     $stdin = [Console]::OpenStandardInput()
@@ -27,8 +38,15 @@ try {
     if ([string]::IsNullOrEmpty($transcriptPath) -or -not (Test-Path $transcriptPath)) { exit 0 }
 
     # Tail-bounded transcript read - last 50 lines only.
+    # Also extracts usage + model from the LAST assistant record that has them
+    # (per H18 research 2026-05-10: every assistant API response carries message.usage).
     $tail = Get-Content $transcriptPath -Tail 50 -Encoding UTF8
     $assistantText = $null
+    $tokensIn = $null
+    $tokensOut = $null
+    $tokensCacheRead = $null
+    $tokensCacheCreate = $null
+    $modelId = $null
     foreach ($line in $tail) {
         try {
             $entry = $line | ConvertFrom-Json
@@ -43,17 +61,35 @@ try {
                 } elseif ($content -is [string]) {
                     $assistantText = $content
                 }
+                # H18: extract usage + model when present (last wins; chronological tail order)
+                try {
+                    $u = $entry.message.usage
+                    if ($null -ne $u) {
+                        if ($null -ne $u.input_tokens)               { $tokensIn          = [int]$u.input_tokens }
+                        if ($null -ne $u.output_tokens)              { $tokensOut         = [int]$u.output_tokens }
+                        if ($null -ne $u.cache_read_input_tokens)    { $tokensCacheRead   = [int]$u.cache_read_input_tokens }
+                        if ($null -ne $u.cache_creation_input_tokens){ $tokensCacheCreate = [int]$u.cache_creation_input_tokens }
+                    }
+                    $m = $entry.message.model
+                    if (-not [string]::IsNullOrWhiteSpace([string]$m)) { $modelId = [string]$m }
+                } catch { }
             }
         } catch { continue }
     }
-    if ([string]::IsNullOrEmpty($assistantText)) { exit 0 }
+    # In tokens-only mode, response text not required - exit only if also no token data
+    if ($writeMode -eq 'tokens') {
+        if ($null -eq $tokensIn -and $null -eq $tokensOut -and $null -eq $tokensCacheCreate) { exit 0 }
+        $assistantText = $null
+    } else {
+        if ([string]::IsNullOrEmpty($assistantText)) { exit 0 }
 
-    $maxChars = [int]$config.capture.max_prompt_chars
-    if ($assistantText.Length -gt $maxChars) {
-        $assistantText = $assistantText.Substring(0, $maxChars) + '...[TRUNCATED]'
-    }
-    foreach ($pattern in $config.capture.redact_patterns) {
-        $assistantText = [regex]::Replace($assistantText, $pattern, '[REDACTED]')
+        $maxChars = [int]$config.capture.max_prompt_chars
+        if ($assistantText.Length -gt $maxChars) {
+            $assistantText = $assistantText.Substring(0, $maxChars) + '...[TRUNCATED]'
+        }
+        foreach ($pattern in $config.capture.redact_patterns) {
+            $assistantText = [regex]::Replace($assistantText, $pattern, '[REDACTED]')
+        }
     }
 
     $cwd = [string]$hook.cwd
@@ -105,10 +141,13 @@ try {
         return ($parts[-$n..-1] -join '/')
     }
 
+    $eventTag = if ($writeMode -eq 'tokens') { 'StopTokens' } else { 'Stop' }
+    $respChars = if ($null -ne $assistantText) { $assistantText.Length } else { $null }
+
     $record = [ordered]@{
         id              = [guid]::NewGuid().ToString()
         ts              = (Get-Date).ToUniversalTime().ToString('o')
-        event           = 'Stop'
+        event           = $eventTag
         session_id      = $sessionId
         transcript_path = if ($storeFull) { $transcriptPath } else { $null }
         transcript_hash = Get-PathHash $transcriptPath
@@ -121,7 +160,12 @@ try {
         project_weight  = $weight
         tier            = $tier
         response        = $assistantText
-        response_chars  = $assistantText.Length
+        response_chars  = $respChars
+        tokens_in           = $tokensIn
+        tokens_out          = $tokensOut
+        tokens_cache_read   = $tokensCacheRead
+        tokens_cache_create = $tokensCacheCreate
+        model               = $modelId
         hae_phase       = [int]$config.phase
         source          = 'hook'
     }

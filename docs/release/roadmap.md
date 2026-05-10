@@ -6,9 +6,10 @@ Long-term direction for the HAE plugin. Updated each /release-plan cycle.
 
 ### Q2 2026 (current)
 
-- **Done:** Phase 5 (release-manager loop integration + standalone repo + global cross-project install + Path A twin)
-- **Active:** v0.5.0 wave 1+2 done - twin gates wired (H3), CLAUDE.md tightened (H6), report.ps1 mockup (H8 phase 1), auto-promote homes (H9), forum user-pain research (H14), plugin distribution research (H17). Awaiting CB.
-- **Next:** v0.6.0 - top by RICE: H1 marketplace UI install (28.8, deferred from v0.5.0), H19 override-rate drift signal (26.7, new from H14), H18 cost skill (14.4, new from H14), H12 v1.0 OSS release (7.2, post-H17), H8 code (5.6, post-mockup approval).
+- **Shipped:** v0.5.0 (2026-05-07) - twin gates wired (H3), CLAUDE.md tightened (H6), auto-promote homes (H9), report.ps1 mockup (H8 phase 1), forum user-pain + plugin distribution research (H14, H17).
+- **Active:** v0.6.0 (locked 2026-05-10) - H1 marketplace UI install (28.8, top), H19 override-rate drift signal (26.7), H18 /hae:cost skill (14.4), H12 v1.0 OSS release (7.2, gated on H1 <=0.5w), H8 code (5.6, gated on mockup approval). Total 4.2w max, 3.0w if both gates trip.
+- **Mid-cycle review:** 2026-05-17 - evaluate gate states.
+- **Next:** v0.7.0 - candidates pending v0.6.0 close: carry-overs (H12, H8 code) if gated, plus H20 repetition classifier, H21 PostToolUse capture, H13 hook perf research, H16 cross-platform research.
 
 ### Q3 2026 (planned)
 
@@ -38,7 +39,7 @@ Long-term direction for the HAE plugin. Updated each /release-plan cycle.
 
 ## Risks tracked
 
-- **R1:** Marketplace UI install gap (H1) blocks public adoption. RICE=11.2; in current scope.
+- **R1:** Marketplace UI install gap (H1) blocks public adoption. RICE=28.8 post-H17; top of v0.6.0 scope.
 - **R2:** Capture hot-path latency (470ms cold) may bite if Windows file I/O degrades. Research H13 RED priority.
 - **R3:** Single operator = thin signal; profile may overfit. Mitigation: keep behavioral calibration (`scripts/report.ps1`) trustworthy.
 - **R4:** Twin few-shot retrieval is keyword-based; may miss thematically relevant exemplars. Research H10 YELLOW priority.
