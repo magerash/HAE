@@ -4,21 +4,19 @@
     "name": "Magerash",
     "url": "https://github.com/Magerash"
   },
-  "metadata": {
-    "description": "HAE marketplace - single plugin (Human Agent Emulator).",
-    "version": "0.6.2"
-  },
+  "description": "HAE marketplace - single plugin (Human Agent Emulator).",
   "plugins": [
     {
       "name": "hae",
-      "description": "HAE - Human Agent Emulator. Captures operator prompts + decisions; builds personality + decision-style profile; serves twin agent for backlog grooming, scope decisions, release control.",
-      "version": "0.6.2",
+      "source": "./plugins/hae",
+      "description": "Captures operator prompts + decisions across Claude Code sessions, builds a personality + decision-style profile, serves a twin agent that emulates the operator for backlog grooming, scope decisions, and release control.",
+      "version": "0.6.3",
       "author": {
         "name": "Magerash"
       },
       "homepage": "https://github.com/Magerash/HAE",
       "license": "MIT",
-      "source": "./plugins/hae"
+      "keywords": ["memory", "persona", "twin", "release-management", "claude-code", "observability"]
     }
   ]
 }

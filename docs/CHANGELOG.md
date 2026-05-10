@@ -4,6 +4,21 @@ Format: `### Changelog vX.Y.Z YYYY-MM-DD`. Style: professional, minimalistic. On
 
 ---
 
+### Changelog v0.6.3 2026-05-11
+
+**Manifest schema fix.** Marketplace UI install failed with "invalid manifest file at .claude-plugin\plugin.json" - HAE-custom fields rejected by Claude Code schema validation.
+
+- Removed from `plugins/hae/.claude-plugin/plugin.json`: `phase` (custom integer), `scope` (custom string), `displayName` (uncertain support). HAE-internal phase tracking moved entirely to `config.default.json` where it already lived.
+- Renamed `tags` -> `keywords` (npm-style standard). Added `claude-code` + `observability` keywords.
+- `repository` field changed from string to object form `{type: "git", url: "..."}` (npm-style standard).
+- `.claude-plugin/marketplace.json` flattened: removed `metadata` wrapper (not standard); moved `description` to top level; added `keywords` to plugin entry.
+
+Local install + marketplace UI install both validated post-fix. README badge updated.
+
+No code changes. Schema-only fix to unblock H1 marketplace UI path.
+
+---
+
 ### Changelog v0.6.2 2026-05-10
 
 **Capture hooks async. H13a quick win per H13 RA findings.** Zero-effort fix: eliminates user-visible 470ms PS5.1 cold-start block on every prompt and Stop event.

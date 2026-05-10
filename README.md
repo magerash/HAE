@@ -1,22 +1,19 @@
-# HAE — Human Agent Emulator
+# HAE - Human Agent Emulator
 
-Plugin that captures operator prompts + decisions across Claude Code sessions, builds a personality + decision-style profile of the operator, and serves a twin agent that emulates the operator for backlog grooming, scope decisions, and release control.
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Plugin: Claude Code](https://img.shields.io/badge/plugin-Claude%20Code-orange.svg)](https://github.com/anthropics/claude-code)
+[![Phase: 5.5](https://img.shields.io/badge/phase-5.5%20active-blue.svg)](#status)
+[![Version: v0.6.3](https://img.shields.io/badge/version-v0.6.3-informational.svg)](docs/CHANGELOG.md)
 
-## Status
+> Captures your decisions, builds your judgment profile, serves a twin agent that thinks like you.
 
-**v0.6.2 — Phases 0-5 done; phase 5.5 active. License: MIT. Capture hooks async (no user-visible block).** Capture live, classifier shipped, full operator profile, twin agent at medium-high confidence. v0.6.0 ships H1 marketplace UI install (repo restructure to `plugins/hae/` + `.claude-plugin/marketplace.json` at root + plugin.json declares hooks/commands/agents/skills paths; `/plugin marketplace add Magerash/HAE` now works), H19 override-rate drift signal (4-week sparkline in `/hae:status` overall + per-axis as personal Anthropic-change detector), H18 cost skill (`/hae:cost` with schema additive `tokens_in/out/cache_read/cache_create/model`, slim StopTokens record privacy-preserving, Opus/Sonnet/Haiku 2026 pricing). H17 + H14 RA research informed scope. H8 code + H12 OSS pending operator decisions.
+HAE is a Claude Code plugin. It captures the deltas between what an agent proposes and what you actually decide, builds a personality + decision-style profile from your real history, and serves a twin agent that emulates your judgment for backlog grooming, scope decisions, and release control.
 
-## Why
+Existing AI "twin" products (Personal.ai, Delphi, Replika) imitate *voice*. HAE imitates *judgment*. Existing agent observability tools (Langfuse, claude-code-otel, Anthropic /insights) log activity. HAE captures the operator's overrides on top of that activity. The override exemplars become high-signal few-shot training data no other tool collects.
 
-Existing AI "twin" products (Personal.ai, Delphi, Replika) imitate *voice*. HAE imitates *judgment* — the deltas between what an agent proposes and what the operator decides. That's the highest-signal training data for a twin.
+---
 
-## Installation
-
-HAE is a global cross-project plugin. One install, captures from every project's CLI session land in a shared data dir.
-
-### Claude Code
-
-**Option A: Marketplace UI (recommended, v0.6.0+):**
+## Quick start
 
 ```
 /plugin marketplace add Magerash/HAE
@@ -24,9 +21,57 @@ HAE is a global cross-project plugin. One install, captures from every project's
 /hae:setup
 ```
 
-Three commands. Claude Code clones the repo, registers the marketplace, installs the plugin, runs the setup skill to bootstrap the data dir + `HAE_DATA_DIR` env + statusline.
+Three slash commands inside Claude Code. Capture starts on your next prompt.
 
-**Option B: Local install script (Windows-only, suits dev/junction mode):**
+To see what was captured:
+
+```
+/hae:status
+```
+
+---
+
+## What HAE does
+
+- **Captures every prompt + response** via Claude Code hooks. Sub-50ms async (no user-visible block since v0.6.2).
+- **Redacts secrets + PII** before write. 25 regexes cover GitHub PATs, OpenAI keys, AWS, JWTs, PEM, DB URLs with creds, emails, generic password/token assignments.
+- **Builds operator profile** through PAEI (Adizes 4 roles) + HEXACO Brief (6 factors) + 8 custom decision-style items + free-form principles. Persona auto-generated from all four.
+- **Classifies prompts** into 8-category taxonomy with scope_signal, evidence_demand, risk_appetite, urgency, override-axis detection.
+- **Twin agent** loads persona + principles + override exemplars + topical exemplars. Emulates your judgment in standard format (Twin take / Why / Risk / Confidence / sign-off).
+- **Override-rate drift signal** in `/hae:status`: trailing 4-week sparkline as a personal Anthropic-change detector. Spots silent model changes the way Anthropic billing dashboards cannot.
+- **Cost tracker** (`/hae:cost`): weekly token spend per project, Opus/Sonnet/Haiku 2026 pricing, schema-additive non-breaking. No org-admin API key needed.
+- **Auto-promote home projects** by capture volume. The list of "what matters" updates itself.
+- **Cross-project install:** one plugin instance, every project's Claude Code session lands in a shared data dir.
+
+## Why HAE
+
+Five forum-confirmed pain points (see `docs/research/forum_userpain_2026-05-07.md`) HAE was designed against:
+
+| Pain | What HAE does |
+|------|---------------|
+| Context loss between sessions | Captures every prompt + response in JSONL; twin agent retrieves past decisions on demand |
+| Cost opacity (no per-project breakdown) | `/hae:cost` aggregates token spend by week + project + model tier |
+| Undocumented model changes break workflows | Override-rate drift sparkline in `/hae:status` surfaces unilateral Anthropic changes via your own behavior delta |
+| Prompt repetition fatigue | Classifier identifies prompts you keep typing (planned v0.7.0) |
+| Vendor lock-in anxiety | Local JSONL only. No cloud. Open schema. MIT licensed. Data portability tool planned (v0.7.0) |
+
+---
+
+## Install
+
+### Windows (supported)
+
+**Option A: Marketplace UI (recommended, v0.6.0+)**
+
+```
+/plugin marketplace add Magerash/HAE
+/plugin install hae@hae
+/hae:setup
+```
+
+Three slash commands inside Claude Code. Claude Code clones the repo, registers the marketplace, installs the plugin from `plugins/hae/`, then `/hae:setup` bootstraps `%USERPROFILE%\.hae\` data dir + `HAE_DATA_DIR` env + statusline.
+
+**Option B: Local install script (suits dev / live-edit)**
 
 ```powershell
 git clone https://github.com/Magerash/HAE C:\Projects\HAE
@@ -34,223 +79,254 @@ powershell -File C:\Projects\HAE\plugins\hae\scripts\install_plugin.ps1 -Persist
 # restart Claude Code
 ```
 
-Copies the plugin to `C:\Plugins\hae` (default; `-CopyTo` to override), registers a local marketplace (`hae-local`), bootstraps `%USERPROFILE%\.hae\` data dir, persists `HAE_DATA_DIR` env, rewires statusline. Idempotent.
+Robocopies plugin to `C:\Plugins\hae` (override with `-CopyTo`), bootstraps data dir, persists `HAE_DATA_DIR` user-scope, rewires statusline, registers local marketplace `hae-local`. Idempotent. Use `-Mode Junction` for live dev (edits propagate without re-copy).
 
-If you skip the installer, run `/hae:setup` to bootstrap data dir + env + statusline.
+See `INSTALL.md` for `-CopyTo`, `-DataDir`, `-Mode Junction`, and uninstall details.
 
-See `INSTALL.md` for `-CopyTo`, `-DataDir`, `-Mode Junction` (live dev), and uninstall details.
+### macOS (planned, v0.8.0+)
 
-### Codex CLI
+```
+# planned - tracked as H16 cross-platform install
+# blocked: capture scripts are PowerShell-only today
+# follow: https://github.com/Magerash/HAE/issues  (label: cross-platform)
+```
 
-*Coming soon.* HAE will support OpenAI Codex CLI sessions via the same hook contract once Codex CLI exposes equivalent `UserPromptSubmit` / `Stop` hook events. Tracking issue: TBD.
+Marketplace UI install (`/plugin marketplace add Magerash/HAE`) clones the repo successfully on macOS, but capture hooks fail because they invoke `powershell.exe`. Cross-platform port (bash hooks or Go binary) tracked as backlog item H16. Watch the issues tag for progress, or open one with your use case to bump priority.
 
-For now, Codex sessions are not captured. Claude Code captures land in `~/.hae/prompts/raw/` and the twin agent draws from those records regardless of which CLI invokes `/hae:twin` later.
+### Linux (planned, v0.8.0+)
 
-## Plugin commands
+Same status as macOS. Tracked under the same H16 cross-platform port. Bash + zsh shells targeted; PowerShell Core (pwsh) on Linux is a possible bridge if community signal supports it.
 
-User invokes via `/hae:<name>` (Claude Code namespaces plugin skills automatically).
+### Codex CLI (planned)
+
+Tracked as H15 Codex CLI integration. Blocked on Codex CLI exposing equivalent `UserPromptSubmit` / `Stop` hook events. Once landed, captures from any Codex session will join the same shared data dir, and the twin agent reads regardless of which CLI invoked it.
+
+### Uninstall
+
+```powershell
+# Windows
+powershell -File C:\Projects\HAE\plugins\hae\scripts\install_plugin.ps1 -Uninstall
+```
+
+Removes plugin junction + registry entries. Operator data dir at `%USERPROFILE%\.hae\` is preserved (your captures are never auto-deleted).
+
+---
+
+## Usage
+
+Capture is automatic post-install. Slash commands surface what was captured.
 
 | Command | Purpose |
 |---------|---------|
-| `/hae:setup` | Bootstrap data dir + env + statusline after marketplace install (idempotent). |
-| `/hae:status` | Dashboard: capture stats, profile completeness, hook + scheduler state. |
-| `/hae:home` | Manage `weighting.homes` list — list / add / remove / auto-detect top-volume projects. |
-| `/hae:profile` | Run PAEI 30Q + HEXACO Brief 24Q + custom 8Q + free-form principles; generate `persona.md`. |
-| `/hae:backfill` | One-shot import of historical Claude Code session transcripts from `~/.claude/projects/`. |
-| `/hae:consolidate` | Merge per-session raw files into combined dated files. |
-| `/hae:classify` | Phase 3 classifier pass — raw → structured (8-cat taxonomy + override deltas). |
-| `/hae:twin` | Phase 4 emulator subagent. Requires Phase 2 profile + Phase 3 records. |
-| `/hae:statusline` | Install / preview / restore HAE statusline (standalone or composed). |
+| `/hae:status` | Dashboard: capture stats, profile state, override-rate drift sparkline, auto-promote candidates, backfill state |
+| `/hae:cost [-Weeks N]` | Token spend per week + project + model tier (Opus/Sonnet/Haiku pricing) |
+| `/hae:home` | Manage home-project list (`list` / `add` / `remove` / `auto-detect`) |
+| `/hae:profile` | Run questionnaires (PAEI 30Q + HEXACO 24Q + Custom 8Q + principles); generates `persona.md` |
+| `/hae:twin <question>` | Invoke twin to emulate your judgment on a question |
+| `/hae:backfill` | One-shot import of historical Claude Code sessions from `~/.claude/projects/` |
+| `/hae:classify` | Single-batch classifier pass (raw -> structured) |
+| `/hae:classify-bulk` | Spawn subagent that loops batches in fresh context |
+| `/hae:consolidate` | Merge per-session JSONL into combined daily files |
+| `/hae:setup` | Bootstrap data dir + env + statusline (post-install or post-Claude-Code-update) |
+| `/hae:statusline` | Install / preview / restore HAE statusline (standalone or composed with another HUD) |
 
-Run `/plugin list` after install — `hae@hae-local` (or `hae@hae`) should appear enabled.
-
-## Layout
-
-**Repo layout (v0.6.0+):**
+Sample `/hae:status` output:
 
 ```
-HAE/                              # repo root
-├── .claude-plugin/
-│   └── marketplace.json          # marketplace catalog (single plugin: hae)
-├── README.md
-├── INSTALL.md
-├── docs/
-│   ├── CHANGELOG.md
-│   ├── chunks/                   # progressive-disclosure documentation
-│   ├── release/                  # RICE backlog, scope, roadmap
-│   └── research/                 # research files (gitignored by default)
-├── plugins/
-│   └── hae/                      # plugin source (CLAUDE_PLUGIN_ROOT after install)
-│       ├── .claude-plugin/
-│       │   └── plugin.json       # manifest (declares hooks/commands/agents/skills paths)
-│       ├── config.default.json   # universal defaults: capture, redact, classifier, twin gates
-│       ├── config.user.example.json  # template for operator-private user config
-│       ├── hooks/hooks.json      # hook bindings using ${CLAUDE_PLUGIN_ROOT}
-│       ├── commands/             # slash commands (release-plan, scope-review, rice-score)
-│       ├── agents/               # subagent specs (hae-twin + release team: SA/OB/UI/QA/PM/RM/CA/RA)
-│       ├── skills/               # /hae:* slash commands
-│       ├── scripts/
-│       │   ├── _lib.ps1                # config + path resolution helpers
-│       │   ├── _homes_lib.ps1          # auto-promote homes helpers
-│       │   ├── _metrics_lib.ps1        # override-rate drift + sparkline
-│       │   ├── capture_prompt.ps1      # UserPromptSubmit hook
-│       │   ├── capture_response.ps1    # Stop hook
-│       │   ├── classify.ps1            # Phase 3 classifier
-│       │   ├── twin.ps1                # Phase 4 twin context composer
-│       │   ├── consolidate.ps1
-│       │   ├── backfill_history.ps1
-│       │   ├── manage_homes.ps1
-│       │   ├── status.ps1              # /hae:status dashboard (with override-rate drift)
-│       │   ├── statusline.ps1
-│       │   ├── statusline_universal.ps1
-│       │   ├── install_statusline.ps1
-│       │   ├── report.ps1
-│       │   ├── install_plugin.ps1      # full install: marketplace + Copy + bootstrap
-│       │   ├── setup_data.ps1          # post-marketplace bootstrap
-│       │   └── install_hooks.ps1       # legacy direct-hook installer
-│       ├── schema/record.schema.json
-│       └── tests/                # questionnaire banks
-└── .gitignore
+## HAE status - phase 5 - capture: ON
+
+### Plugin
+- enabled: True (hae@hae-local)
+- response capture: off
+- privacy.store_full_paths: False
+
+### Homes
+- C:\Projects\My habits  [path]
+- HAE  [name]
+- weights: home=1.0  active=0.7  other=0.3
+
+### Raw captures
+- Date range:     2026-04-08 09:00 -> 2026-05-10 03:11 UTC
+- Total:          1869 records
+- Top projects:   habits=1241, Findar=253, buy=93, ...
+
+### Override-rate drift (4-week trailing vs prior 4-week baseline)
+- Overall:    --.=*#  recent 71 vs prior 18, delta 53 +294%  [ALERT]
+- By axis:
+    evidence        . #*-  recent 25 vs prior 1 (delta 24 +2400%)
+    approach       =#.#**  recent 32 vs prior 15 (delta 17 +113%)
+    scope          .   -*  recent 8 vs prior 1 (delta 7 +700%)
+    priority        -- *#  recent 6 vs prior 1 (delta 5 +500%)
+  legend: sparkline grades=' . - = # *' (5 levels by max in series); recent on right
+
+### Profile
+| File           | Exists | Modified         |
+| paei.json      | yes    | 2026-05-05 20:31 |
+| hexaco.json    | yes    | 2026-05-05 20:31 |
+| ...
 ```
 
-**Operator data dir (default `%USERPROFILE%\.hae\`, override via `$env:HAE_DATA_DIR`):**
+The +2400% spike on the evidence axis above is real operator data. Either Anthropic changed serving parameters or the operator started demanding more rigorous verification. Either way, HAE surfaces it before you can articulate why something feels off.
+
+---
+
+## How it works
 
 ```
-%USERPROFILE%\.hae\
-├── config.json                   # operator-private overrides (homes, project_overrides, statusline.previous_command)
-├── prompts/raw/                  # JSONL captures from ALL projects (gitignored from any repo)
-├── prompts/structured/           # classifier output
-├── profile/                      # PAEI + HEXACO + custom + persona.md
-├── state/                        # backfill tracking, classifier state
-└── docs/internal-sessions/       # optional: hand-written session logs (operator's own memory)
+[Claude Code session]
+       |
+       | UserPromptSubmit hook (async, sub-50ms)
+       v
+capture_prompt.ps1  ->  redact secrets  ->  hash paths  ->  weight by home/active/other
+       |
+       v
+prompts/raw/<date>__<sid>.jsonl    (per-session, single writer, no contention)
+       |
+       | Stop hook (async)
+       v
+capture_response.ps1  ->  parse transcript tail  ->  extract tokens + model  ->  redact response
+       |
+       v
+[same per-session file, paired record]
+       |
+       | /hae:classify (manual or batch)
+       v
+prompts/structured/<yyyy-MM>.jsonl  +  overrides.jsonl  (high-signal subset)
+       |
+       v
+twin.ps1  ->  load persona + principles + override exemplars + topical exemplars  ->  markdown context
+       |
+       v
+hae-twin agent  ->  Twin take / Why / Risk / Confidence / sign-off
 ```
 
-## Phases
+Per-session direct writes mean no spool, no scheduler, no daemon. Each session has its own filename so cross-session contention is zero.
 
-| Phase | Goal | Status |
-|-------|------|--------|
-| 0 | Scaffold + plugin manifest + script skeletons | ✅ done v0.1.0 |
-| 1 | `UserPromptSubmit`+`Stop` capture, per-session JSONL writes, redaction + path hashing, `/hae:home` weighting, `/hae:backfill` for historical sessions, `/hae:consolidate` daily merge | ✅ done v0.1.0 |
-| 2 | Profile: PAEI 30Q + HEXACO Brief 24Q + Custom 8Q + free-form principles + auto-generated `persona.md`. Captured via AskUserQuestion 4-bucket Likert flow + parallel batching. Behavioral calibration validated against captured records | ✅ done v0.3.0 |
-| 3 | Classifier: raw → structured 8-cat taxonomy + scope_signal + evidence_demand + risk_appetite + override delta detection. Auto-classifier handles 5 system patterns inline (40-55% LLM-cycle savings). `/hae:classify` single-batch + `/hae:classify-bulk` subagent loop. 1670 records classified, 75 override exemplars captured | ✅ done v0.2.0 |
-| 4 | `hae-twin`: `scripts/twin.ps1` context composer loads persona + principles + override exemplars (baseline-boosted) + topical exemplars (keyword × project_weight ranked). `/hae:twin` answers in Twin-take / Why / Risk / Confidence format. Validated A/B with same V1-month-view question and 18 vs 75 override pools | ✅ done v0.2.0 |
-| 5 | Plug `hae-twin` into release-manager loop as operator surrogate (RICE votes, scope picks, codex-review gates) + split plugin into own repo + global cross-project install + config split | 🔄 in progress v0.4.0 |
+For the full architecture deep-dive, see `docs/chunks/architecture/`.
 
-## Scope progression
+---
 
-**Global cross-project install (v0.4.0+).** Plugin lives once at install path (default `C:\Plugins\hae`). Captures from every project's Claude Code session funnel into a single shared data directory. Records carry `project` + `is_home_project` + `project_weight` fields so the classifier and twin can weight home work over drive-by sessions.
+## Configuration
 
-## Capture mechanics
+Two-file split:
 
-**Per-session direct write** — no spool, no scheduler, no daemon. Each Claude Code session has its own dated file: `prompts/raw/<UTC-date>__<sid8>.jsonl`. Within a session, hooks fire sequentially (Claude Code processes one prompt at a time), so each file has a single writer. Across sessions, different filenames mean zero contention. No mutex, no append race.
+- **`plugins/hae/config.default.json`** - universal defaults shipped with plugin (capture flags, redact patterns, classifier categories, twin gates, pricing).
+- **`<dataRoot>/config.json`** - operator-private overrides (homes, project overrides, statusline previous command, gate toggles).
 
-1. `UserPromptSubmit` hook → reads stdin (raw bytes, UTF-8), redacts secrets, hashes paths, appends one record line to `prompts/raw/<date>__<sid>.jsonl`. Sub-50ms.
-2. `Stop` hook → reads `transcript_path` tail (last 50 lines), extracts last assistant message, redacts, appends paired record to the same per-session file. Sub-50ms (bounded read, bounded write).
-3. **Consolidation** (optional, lazy) → `scripts/consolidate.ps1` merges per-session files into combined `prompts/raw/<date>.jsonl` for downstream consumers that prefer one file per day. Run on demand by `/hae:consolidate`, `/hae:status`, or `/hae:classify`. Per-session files kept by default (use `-Cleanup` to delete after merge).
+Operator config is bootstrapped from `config.user.example.json` on first install. Edit freely; no restart needed (capture re-reads config on every fire).
 
-Hooks installed at `~/.claude/settings.json` so capture works from **any cwd / any project**. All records land in this plugin's `prompts/raw/` regardless of which project triggered them — single sink, easy to query.
+Common knobs:
 
-## Backfill (optional)
-
-`scripts/backfill_history.ps1` — one-shot import of historical Claude Code session transcripts from `~/.claude/projects/`. Same redaction / weighting / PII pipeline as live capture. Idempotent — tracks processed sessions in `state/backfilled_sessions.json`. Records carry `source: "backfill"` (vs live `source: "hook"`). Filename prefix `bf-` distinguishes them: `prompts/raw/<date>__bf-<sid8>.jsonl`.
-
-User opts in by running `/hae:backfill` — never auto-runs. Some users will skip this and only collect forward.
-
-## Project weighting
-
-Not every prompt is equal training data. Twin retrieval prioritizes high-signal records when emulating operator decisions. Three tiers, decided at capture time from two signals: `homes` membership (curated) and capture `source` (live vs imported).
-
-### Tiers
-
-| Tier | Weight | When | Meaning |
-|------|--------|------|---------|
-| `home` | **1.0** | cwd matches `weighting.homes` entry | Curated primary project. Defines operator identity. Slow-change. |
-| `active` | **0.7** | live capture (`source=hook`), not in homes | Currently being worked on. Recent signal. The project you're typing in right now. |
-| `other` | **0.3** | imported history (`source=backfill`), not in homes | Older drive-by sessions. Useful but diluted persona signal. |
-
-Decision logic at capture (capture_prompt.ps1, capture_response.ps1, backfill_history.ps1):
-
-```
-if cwd matches homes:        tier=home,    weight=home_weight
-elif source == 'hook':       tier=active,  weight=active_weight
-else (source == 'backfill'): tier=other,   weight=other_weight
+```json
+{
+  "capture": {
+    "enabled": true,
+    "include_response": false,
+    "include_tokens": true
+  },
+  "privacy": {
+    "store_full_paths": false,
+    "path_segments_kept": 2
+  },
+  "weighting": {
+    "homes": ["C:\\Projects\\my-app"],
+    "auto_promote": { "enabled": false, "top_n": 3, "min_records": 100 }
+  },
+  "twin": {
+    "gates": { "before_user_approval": true }
+  }
+}
 ```
 
-Each record carries: `project`, `is_home_project`, `project_weight`, `tier`, `source`.
+Full reference + every field documented inline in `plugins/hae/config.default.json`.
 
-### Why three tiers, not two?
+---
 
-`home` is a manual stamp — "this project IS the operator surface." Curated, stable, opt-in. Auto-detection is volume-based, and volume ≠ value: a 3-week research detour produces high volume but low persona signal. Home is the anchor; active is the wind.
+## Data location
 
-The active/other split is automatic via `source`. Live captures are recent by definition (you're typing now), so they get the active tier without any list to maintain. Backfilled records are historical imports — older focus, lower weight unless homed.
-
-### Homes list — the only thing you manage
-
-`weighting.homes` lives in your user config (`<dataRoot>/config.json`). Each entry is either:
-
-- **Path prefix** — e.g. `C:\Projects\my-app` — matches any cwd starting with this prefix
-- **Bare basename** — e.g. `my-app` — matches any cwd whose basename equals this
-
-Empty `homes` = nothing is home. Live captures still get active (0.7), backfill stays other (0.3). Default ships empty.
+Default: `%USERPROFILE%\.hae\` on Windows. Override with `$env:HAE_DATA_DIR`.
 
 ```
-/hae:home list                  # see current homes
-/hae:home add C:\Projects\X     # manually add
-/hae:home add my-app            # add by bare name
-/hae:home remove my-app         # remove
-/hae:home auto-detect           # preview top-volume projects from captured records
-/hae:home auto-detect -Apply    # write to config
+<dataRoot>\
+  config.json                operator-private overrides
+  prompts\raw\               JSONL captures from ALL projects
+  prompts\structured\        classifier output
+  profile\                   PAEI + HEXACO + custom + persona.md
+  state\                     backfill + classifier + auto_promote audit log
 ```
 
-Capture scripts re-read config on every hook fire — no Claude Code restart needed when homes change.
+Data dir is **never** auto-deleted by uninstall. Your captures survive plugin reinstalls, Claude Code updates, and disk migrations as long as the env var or default path resolves.
 
-### Examples
-
-| cwd | source | homes match? | tier | weight |
-|-----|--------|--------------|------|--------|
-| `C:\Projects\My habits` (live) | hook | yes | home | 1.0 |
-| `C:\Projects\HAE` (live, not in homes) | hook | no | active | 0.7 |
-| `C:\Projects\HAE` (backfilled) | backfill | no | other | 0.3 |
-| `C:\Projects\My habits` (backfilled) | backfill | yes | home | 1.0 |
-| Random one-off cwd (live) | hook | no | active | 0.7 |
-
-Note: weight is **frozen at capture time**. If you later add a project to homes, existing records keep their original tier. Re-tagging old records is a separate opt-in operation (not yet implemented).
-
-### Used by
-
-- **Phase 3 classifier** — can skip records below a weight threshold to keep structured set lean
-- **Phase 4 twin few-shot** — retriever multiplies similarity score by `project_weight` so home + active exemplars outrank backfilled drive-bys
-- **Phase 2 persona regen** — weighted aggregation prevents off-topic projects from skewing inferred decision style
-
-### Recency / time-decay
-
-Tier reflects "is this project relevant right now," not "how old is the record." Age-based decay (e.g. records from 6 months ago weighted lower than today's) is a Phase 4 retrieval-time concern, not a capture-time concern. Capture stores `ts` per record; the twin can apply time-decay multipliers when ranking exemplars without changing stored weights.
-
-### Escape hatch
-
-`weighting.project_overrides` (object) — set explicit per-project weights when a project doesn't fit the home/active/other model. Example: a research project that should always be 0.5 regardless of source. Use sparingly.
-
-## Personality stack
-
-- **PAEI** (Adizes 4 roles) — coarse managerial archetype
-- **HEXACO-60** (free, public-domain, validated) — 6 personality factors
-- **8 custom items** — risk tolerance, scope-bias, evidence threshold, abstraction tolerance, refactor-vs-ship, review strictness, research depth, parallelism comfort
-
-Skipped: MBTI/DISC (low validity, license friction).
-
-## Prompt taxonomy (8 categories)
-
-`FEATURE` · `BUG` · `RESEARCH` · `RELEASE_OPS` · `CODE_QA` · `REFACTOR` · `META` · `PLANNING`
-
-Schema for structured records: see `schema/record.schema.json`.
+---
 
 ## Privacy
 
-- Raw prompts may contain unredacted PII despite the redact pass — `prompts/raw/` is **gitignored**
-- Profile JSON files (`profile/*.json`, `profile/persona.md`) are gitignored
-- Backups from `install_hooks.ps1` are gitignored
-- `prompts/structured/` is committable (categorized only, not raw text — depending on Phase 3 implementation)
+- Raw prompts gitignored (may contain unredacted PII despite the redact pass).
+- Profile JSON + `persona.md` + `principles.md` gitignored.
+- Backup files (`*.hae-backup-*.json`) gitignored.
+- 25 redact regexes applied before write. Extend `config.capture.redact_patterns` for new secret families.
+- Path PII control via `privacy.store_full_paths` (default false): paths SHA-256-hashed + last 2 segments kept.
+- All capture scripts wrap in try/catch + exit 0 on every error path - hot path can never block Claude Code.
+- No cloud. No telemetry. Local JSONL only. MIT licensed. Operator owns the data.
 
-## Next
+---
 
-See `INSTALL.md` for activation steps. See `CHANGELOG.md` (Phase 1+) for capture-enable history.
+## Status
+
+**Done (v0.1.0 -> v0.6.2):**
+
+- Phase 0-1: scaffold + plugin manifest + live capture (UserPromptSubmit + Stop hooks, async since v0.6.2, redaction, path hashing, per-session writes).
+- Phase 2: profile - PAEI 30Q + HEXACO Brief 24Q + Custom 8Q + 6 principles + persona generation. Behavioral calibration validated against captured records.
+- Phase 3: classifier - raw -> structured 8-cat taxonomy (FEATURE / BUG / RESEARCH / RELEASE_OPS / CODE_QA / REFACTOR / META / PLANNING) + scope_signal + evidence_demand + risk_appetite + override-axis detection. Auto-classifier handles 5 system patterns inline (40-55% LLM cycle savings).
+- Phase 4: twin agent - persona + principles + override exemplars + topical exemplars; few-shot retrieval; standard answer format.
+- Phase 5: release-manager loop integration + standalone repo + global cross-project install + config split + Path A twin invocation.
+- Phase 5.5 (v0.5.0): twin gates expansion (`on_scope_cut` + `on_mid_release_scope_add` + `on_backlog_add`); CLAUDE.md tightening + chunk-breadcrumb pattern; auto-promote homes wired (`weighting.auto_promote.enabled`).
+- Phase 5.5 (v0.6.0): marketplace UI install (`/plugin marketplace add Magerash/HAE` works); override-rate drift signal in `/hae:status`; cost skill (`/hae:cost`) with schema-additive token fields + Opus/Sonnet/Haiku 2026 pricing.
+- v0.6.1: MIT LICENSE.
+- v0.6.2: capture hooks async (zero user-visible block).
+
+**Active (v0.7.0):**
+
+- `/hae:export` skill (CSV + markdown summary by project; data-portability + anti-lock-in messaging).
+- v1.0 OSS publish completion (CONTRIBUTING.md, marketplace listing submission, README polish for external audience).
+- `report.ps1` formatter rewrite (TOC + section anchors + takeaway blockquotes + trend tracking + blind-spot interpretation).
+- Repetition-candidate classifier (prompts typed 10+ times surface as CLAUDE.md/hook promotion candidates).
+
+**Planned (v0.8.0+):**
+
+- Phase 6: cross-project intelligence - twin few-shot retrieval upgrade to semantic embeddings (`fastembed` / all-MiniLM-L6-v2 ONNX, local, ~5ms query); exemplar staleness detection.
+- PostToolUse hook capture + `/hae:trace <session-id>` for session audit trail.
+- Cross-platform install (macOS + Linux). Bash hooks or Go binary candidate.
+- Codex CLI integration (depends on Codex hook contract).
+- Phase 6 dashboards: entity rollups, drift detection, project velocity.
+
+**RICE backlog + roadmap:** `docs/release/rice_backlog.md`, `docs/release/roadmap.md`, `docs/release/current_scope.md`.
+
+---
+
+## Documentation
+
+- `INSTALL.md` - install paths in detail (UI, local script, legacy hooks-only)
+- `docs/CHANGELOG.md` - per-version shipped changes
+- `docs/chunks/` - progressive-disclosure documentation (features / architecture / patterns)
+- `docs/release/` - RICE backlog, current + next scope, roadmap, research queue
+- `plugins/hae/.claude-plugin/plugin.json` - plugin manifest (declares hooks/commands/agents/skills paths)
+- `plugins/hae/schema/record.schema.json` - JSONL record schema (additive evolution since v0.1.0)
+
+---
+
+## Contributing
+
+External contributions welcome (planned formal CONTRIBUTING.md in v0.7.0 H12). For now:
+
+- Issues + feature requests: GitHub Issues.
+- Cross-platform port (H16) is the highest-impact contribution opportunity if you have macOS or Linux + Claude Code.
+- Forum-pain-driven hypotheses (Theme A-E from `docs/research/forum_userpain_2026-05-07.md`) explicitly invite community proposals.
+
+The repo is RICE-scored. New ideas get RICE-evaluated via `/rice-score` slash command before scoping.
+
+---
+
+## License
+
+[MIT](LICENSE). Copyright (c) 2026 Magerash. See `LICENSE` for full text.

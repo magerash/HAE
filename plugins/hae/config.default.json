@@ -1,6 +1,6 @@
 {
     "_doc":  "HAE plugin defaults. Committed to dev repo. Universal across all users. Operator-private fields (homes, project_overrides, statusline.previous_command) live in user config.json in data dir.",
-    "version":  "0.6.2",
+    "version":  "0.6.3",
     "phase":  5,
     "scope":  "global-cross-project",
     "capture":  {
@@ -98,5 +98,11 @@
              },
     "statusline":  {
                        "_doc":  "previous_command in user config.json - chain HAE statusline after another tool's statusline (e.g. OMC HUD). Empty default = HAE-only line."
-                   }
+                   },
+    "report":  {
+                   "_doc":  "v0.7.0+ (H8). report.ps1 formatter knobs. blind_spot_threshold fires section-9 interpretation note when abs(behavioral - self_report) >= threshold. Lower = more notes (more sensitive); higher = quieter.",
+                   "blind_spot_threshold":  1.5,
+                   "trend_compare":  "most-recent",
+                   "exemplar_truncate_chars":  80
+               }
 }
