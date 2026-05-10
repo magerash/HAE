@@ -6,13 +6,13 @@
   },
   "metadata": {
     "description": "HAE marketplace - single plugin (Human Agent Emulator).",
-    "version": "0.6.1"
+    "version": "0.6.2"
   },
   "plugins": [
     {
       "name": "hae",
       "description": "HAE - Human Agent Emulator. Captures operator prompts + decisions; builds personality + decision-style profile; serves twin agent for backlog grooming, scope decisions, release control.",
-      "version": "0.6.1",
+      "version": "0.6.2",
       "author": {
         "name": "Magerash"
       },

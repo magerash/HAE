@@ -7,9 +7,10 @@ Long-term direction for the HAE plugin. Updated each /release-plan cycle.
 ### Q2 2026 (current)
 
 - **Shipped:** v0.5.0 (2026-05-07) - twin gates wired (H3), CLAUDE.md tightened (H6), auto-promote homes (H9), report.ps1 mockup (H8 phase 1), forum user-pain + plugin distribution research (H14, H17).
-- **Active:** v0.6.0 (locked 2026-05-10) - H1 marketplace UI install (28.8, top), H19 override-rate drift signal (26.7), H18 /hae:cost skill (14.4), H12 v1.0 OSS release (7.2, gated on H1 <=0.5w), H8 code (5.6, gated on mockup approval). Total 4.2w max, 3.0w if both gates trip.
-- **Mid-cycle review:** 2026-05-17 - evaluate gate states.
-- **Next:** v0.7.0 - candidates pending v0.6.0 close: carry-overs (H12, H8 code) if gated, plus H20 repetition classifier, H21 PostToolUse capture, H13 hook perf research, H16 cross-platform research.
+- **Shipped:** v0.6.0 + v0.6.1 (2026-05-10) - H1 marketplace UI install + H19 override-rate drift + H18 cost skill + MIT license. Validated +294% overall drift / +2400% evidence-axis from H19 sparkline. Cost tracker baseline established. Marketplace UI install live for `/plugin marketplace add Magerash/HAE`.
+- **Active:** v0.7.0 (locked 2026-05-10 evening) - H22 /hae:export skill (17.5, NEW from H14 theme E), H12 v1.0 OSS publish completion (7.0, post-MIT), H8 code formatter (5.6, gated on mockup approval), H20 repetition classifier (5.6). Total 2.2w. H21 twin-trimmed (deferred to v0.8.0). H10 + H13 RA spawning in parallel.
+- **Mid-cycle review:** 2026-05-17 - H8 mockup gate check, H10/H13 RA outputs.
+- **Next:** v0.8.0 - twin intelligence depth: H10 semantic retrieval (5.0, post-research), H21 PostToolUse capture w/ H18 pattern reuse (4.0, batched), H13 hook perf (4.0, post-research).
 
 ### Q3 2026 (planned)
 

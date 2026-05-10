@@ -1,5 +1,5 @@
 {
-  "_comment": "Auto-loaded by Claude Code when plugin enabled. ${CLAUDE_PLUGIN_ROOT} is injected at runtime as the plugin's install dir, so the same hooks.json works on any machine. -WindowStyle Hidden suppresses the brief window flash on each hook fire (Windows). -NonInteractive prevents prompt dialogs.",
+  "_comment": "Auto-loaded by Claude Code when plugin enabled. ${CLAUDE_PLUGIN_ROOT} is injected at runtime as the plugin's install dir, so the same hooks.json works on any machine. -WindowStyle Hidden suppresses the brief window flash on each hook fire (Windows). -NonInteractive prevents prompt dialogs. async:true (v0.6.2+) tells Claude Code not to wait for hook to exit; eliminates user-visible 470ms PS5.1 cold-start block per H13a research finding. HAE hooks always exit 0 + don't use stdout context injection, so async is safe.",
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -7,6 +7,7 @@
         "hooks": [
           {
             "type": "command",
+            "async": true,
             "command": "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File \"${CLAUDE_PLUGIN_ROOT}/scripts/capture_prompt.ps1\""
           }
         ]
@@ -18,6 +19,7 @@
         "hooks": [
           {
             "type": "command",
+            "async": true,
             "command": "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File \"${CLAUDE_PLUGIN_ROOT}/scripts/capture_response.ps1\""
           }
         ]

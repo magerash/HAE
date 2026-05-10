@@ -4,6 +4,19 @@ Format: `### Changelog vX.Y.Z YYYY-MM-DD`. Style: professional, minimalistic. On
 
 ---
 
+### Changelog v0.6.2 2026-05-10
+
+**Capture hooks async. H13a quick win per H13 RA findings.** Zero-effort fix: eliminates user-visible 470ms PS5.1 cold-start block on every prompt and Stop event.
+
+- `plugins/hae/hooks/hooks.json` adds `"async": true` to UserPromptSubmit + Stop hook entries.
+- Per H13 RA research (`docs/research/h13_persistent_ps_host_2026-05-10.md`, gitignored): Claude Code does not wait for async hooks to exit. JSONL record still written within same session, just after Claude Code starts processing. HAE capture hooks always exit 0 + don't use stdout context injection, so async is safe with no regression.
+- Replaces parked H13 persistent-host hypothesis (RICE crashed 4.0 -> 1.5 due to PS5.1 memory leaks + Win Defender false-positive flag + multi-session state risk + claude-mem Windows disaster). H13b (Alt-B Go binary) deferred to v0.9.0 candidate (RICE 5.6).
+- No code changes beyond the one-line config flag. Schema unchanged. Hook command shape unchanged.
+
+Re-install required to propagate hook config. Restart Claude Code to load new bindings.
+
+---
+
 ### Changelog v0.6.1 2026-05-10
 
 **MIT license added.** Step toward H12 (v1.0 OSS publish). Removes "private" license placeholder; clarifies external use rights.
