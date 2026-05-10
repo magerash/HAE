@@ -1,12 +1,12 @@
 {
   "name": "hae",
   "displayName": "HAE - Human Agent Emulator",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Captures operator prompts + decisions across Claude Code sessions, builds a personality + decision-style profile, and serves a twin agent that emulates the operator for backlog grooming, scope decisions, and release control. Global cross-project install: one plugin instance, all projects' captures land in shared data dir.",
   "author": {
     "name": "Magerash"
   },
-  "license": "private",
+  "license": "MIT",
   "homepage": "https://github.com/Magerash/HAE",
   "repository": "https://github.com/Magerash/HAE",
   "phase": 5,

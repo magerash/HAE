@@ -4,6 +4,20 @@ Format: `### Changelog vX.Y.Z YYYY-MM-DD`. Style: professional, minimalistic. On
 
 ---
 
+### Changelog v0.6.1 2026-05-10
+
+**MIT license added.** Step toward H12 (v1.0 OSS publish). Removes "private" license placeholder; clarifies external use rights.
+
+- `LICENSE` file at repo root: MIT, copyright 2026 Magerash. Standard SPDX-identifier `MIT`.
+- `plugins/hae/.claude-plugin/plugin.json` `license` field: `"private"` -> `"MIT"`.
+- `.claude-plugin/marketplace.json` plugin entry adds `"license": "MIT"`.
+- README status line notes MIT license.
+- No code changes. Pure metadata + LICENSE file.
+
+OSS publish (H12) remaining work: CONTRIBUTING.md, marketplace listing submission via clau.de/plugin-directory-submission, README polish for external audience. Tracked in current scope.
+
+---
+
 ### Changelog v0.6.0 2026-05-10
 
 **Marketplace UI install + personal Anthropic-change detector + cost visibility.** Three top-RICE items shipped in single overnight session per /release-plan v0.6.0 scope locked 2026-05-10. Repo restructured to standard plugin convention; new metrics + cost surface make HAE distinguishable from generic capture tools.

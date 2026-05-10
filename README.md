@@ -4,7 +4,7 @@ Plugin that captures operator prompts + decisions across Claude Code sessions, b
 
 ## Status
 
-**v0.6.0 — Phases 0-5 done; phase 5.5 active.** Capture live, classifier shipped, full operator profile, twin agent at medium-high confidence. v0.6.0 ships H1 marketplace UI install (repo restructure to `plugins/hae/` + `.claude-plugin/marketplace.json` at root + plugin.json declares hooks/commands/agents/skills paths; `/plugin marketplace add Magerash/HAE` now works), H19 override-rate drift signal (4-week sparkline in `/hae:status` overall + per-axis as personal Anthropic-change detector), H18 cost skill (`/hae:cost` with schema additive `tokens_in/out/cache_read/cache_create/model`, slim StopTokens record privacy-preserving, Opus/Sonnet/Haiku 2026 pricing). H17 + H14 RA research informed scope. H8 code + H12 OSS pending operator decisions.
+**v0.6.1 — Phases 0-5 done; phase 5.5 active. License: MIT.** Capture live, classifier shipped, full operator profile, twin agent at medium-high confidence. v0.6.0 ships H1 marketplace UI install (repo restructure to `plugins/hae/` + `.claude-plugin/marketplace.json` at root + plugin.json declares hooks/commands/agents/skills paths; `/plugin marketplace add Magerash/HAE` now works), H19 override-rate drift signal (4-week sparkline in `/hae:status` overall + per-axis as personal Anthropic-change detector), H18 cost skill (`/hae:cost` with schema additive `tokens_in/out/cache_read/cache_create/model`, slim StopTokens record privacy-preserving, Opus/Sonnet/Haiku 2026 pricing). H17 + H14 RA research informed scope. H8 code + H12 OSS pending operator decisions.
 
 ## Why
 
