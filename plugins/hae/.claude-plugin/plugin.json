@@ -1,19 +1,13 @@
 {
   "name": "hae",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "Captures operator prompts + decisions across Claude Code sessions, builds a personality + decision-style profile, and serves a twin agent that emulates the operator for backlog grooming, scope decisions, and release control.",
   "author": {
     "name": "Magerash"
   },
   "license": "MIT",
   "homepage": "https://github.com/Magerash/HAE",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Magerash/HAE"
-  },
+  "repository": "https://github.com/Magerash/HAE",
   "keywords": ["memory", "persona", "twin", "release-management", "claude-code", "observability"],
-  "hooks": "./hooks/hooks.json",
-  "commands": "./commands",
-  "agents": "./agents",
-  "skills": "./skills"
+  "hooks": "./hooks/hooks.json"
 }

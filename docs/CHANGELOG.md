@@ -4,6 +4,18 @@ Format: `### Changelog vX.Y.Z YYYY-MM-DD`. Style: professional, minimalistic. On
 
 ---
 
+### Changelog v0.6.4 2026-05-11
+
+**Manifest schema fix round 2.** v0.6.3 didn't fully clear marketplace UI install. Actual validator errors received: `repository: Invalid input: expected string, received object` and `agents: Invalid input`. v0.6.4 corrects both.
+
+- `repository` reverted from `{type, url}` object back to bare string (Claude Code wants string, not npm-style object). Confirmed via direct validator error message.
+- Dropped `agents`, `commands`, `skills` field declarations from plugin.json. Relying on Claude Code convention auto-discovery from `./agents/`, `./commands/`, `./skills/` directories (which exist in plugins/hae/). Only `hooks` declared explicitly (still needed per H17 RA finding).
+- Local install + marketplace UI install both validated post-fix.
+
+Two-round manifest fix done. Schema-only changes; no code touched.
+
+---
+
 ### Changelog v0.6.3 2026-05-11
 
 **Manifest schema fix.** Marketplace UI install failed with "invalid manifest file at .claude-plugin\plugin.json" - HAE-custom fields rejected by Claude Code schema validation.

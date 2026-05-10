@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Plugin: Claude Code](https://img.shields.io/badge/plugin-Claude%20Code-orange.svg)](https://github.com/anthropics/claude-code)
 [![Phase: 5.5](https://img.shields.io/badge/phase-5.5%20active-blue.svg)](#status)
-[![Version: v0.6.3](https://img.shields.io/badge/version-v0.6.3-informational.svg)](docs/CHANGELOG.md)
+[![Version: v0.6.4](https://img.shields.io/badge/version-v0.6.4-informational.svg)](docs/CHANGELOG.md)
 
 > Captures your decisions, builds your judgment profile, serves a twin agent that thinks like you.
 
