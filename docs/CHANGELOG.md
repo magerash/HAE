@@ -4,6 +4,20 @@ Format: `### Changelog vX.Y.Z YYYY-MM-DD`. Style: professional, minimalistic. On
 
 ---
 
+### Changelog v0.6.5 2026-05-12
+
+**Manifest schema fix round 3 + README polish.**
+
+- v0.6.4 still failed at install runtime: `Failed to load hooks from .../hooks/hooks.json: Duplicate hooks file detected: ./hooks/hooks.json resolves to already-loaded file. The standard hooks/hooks.json is loaded automatically, so manifest.hooks should only reference additional hook files.`
+- Fix: dropped `hooks` field from `plugins/hae/.claude-plugin/plugin.json`. Claude Code auto-loads convention `hooks/hooks.json`; explicit declaration causes duplicate load. Same convention auto-discovery already handles `commands/`, `agents/`, `skills/` directories (dropped in v0.6.4).
+- H17 RA "must declare hooks explicitly" finding now superseded by current Claude Code behavior. Convention-only path is the right one.
+- Plugin.json now 10 fields: `name`, `version`, `description`, `author`, `license`, `homepage`, `repository`, `keywords`. No component declarations. Convention auto-discovery handles the rest.
+- README cleanup: removed Phase badge + Phase numbering throughout Status section (feature-list-only). Replaced operator's real project name "My habits" in sample output with generic `my-app` placeholder.
+
+Three rounds of manifest fix done. Plugin should now install cleanly via `/plugin marketplace add Magerash/HAE` + `/plugin install hae@hae`.
+
+---
+
 ### Changelog v0.6.4 2026-05-11
 
 **Manifest schema fix round 2.** v0.6.3 didn't fully clear marketplace UI install. Actual validator errors received: `repository: Invalid input: expected string, received object` and `agents: Invalid input`. v0.6.4 corrects both.

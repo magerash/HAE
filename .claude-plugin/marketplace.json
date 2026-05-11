@@ -10,7 +10,7 @@
       "name": "hae",
       "source": "./plugins/hae",
       "description": "Captures operator prompts + decisions across Claude Code sessions, builds a personality + decision-style profile, serves a twin agent that emulates the operator for backlog grooming, scope decisions, and release control.",
-      "version": "0.6.4",
+      "version": "0.6.5",
       "author": {
         "name": "Magerash"
       },

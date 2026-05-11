@@ -2,8 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Plugin: Claude Code](https://img.shields.io/badge/plugin-Claude%20Code-orange.svg)](https://github.com/anthropics/claude-code)
-[![Phase: 5.5](https://img.shields.io/badge/phase-5.5%20active-blue.svg)](#status)
-[![Version: v0.6.4](https://img.shields.io/badge/version-v0.6.4-informational.svg)](docs/CHANGELOG.md)
+[![Version: v0.6.5](https://img.shields.io/badge/version-v0.6.5-informational.svg)](docs/CHANGELOG.md)
 
 > Captures your decisions, builds your judgment profile, serves a twin agent that thinks like you.
 
@@ -141,14 +140,14 @@ Sample `/hae:status` output:
 - privacy.store_full_paths: False
 
 ### Homes
-- C:\Projects\My habits  [path]
-- HAE  [name]
+- C:\Projects\my-app  [path]
+- another-app  [name]
 - weights: home=1.0  active=0.7  other=0.3
 
 ### Raw captures
 - Date range:     2026-04-08 09:00 -> 2026-05-10 03:11 UTC
 - Total:          1869 records
-- Top projects:   habits=1241, Findar=253, buy=93, ...
+- Top projects:   my-app=1241, side-project=253, buy=93, ...
 
 ### Override-rate drift (4-week trailing vs prior 4-week baseline)
 - Overall:    --.=*#  recent 71 vs prior 18, delta 53 +294%  [ALERT]
@@ -273,32 +272,34 @@ Data dir is **never** auto-deleted by uninstall. Your captures survive plugin re
 
 ## Status
 
-**Done (v0.1.0 -> v0.6.2):**
+**Done (v0.1.0 -> v0.6.4):**
 
-- Phase 0-1: scaffold + plugin manifest + live capture (UserPromptSubmit + Stop hooks, async since v0.6.2, redaction, path hashing, per-session writes).
-- Phase 2: profile - PAEI 30Q + HEXACO Brief 24Q + Custom 8Q + 6 principles + persona generation. Behavioral calibration validated against captured records.
-- Phase 3: classifier - raw -> structured 8-cat taxonomy (FEATURE / BUG / RESEARCH / RELEASE_OPS / CODE_QA / REFACTOR / META / PLANNING) + scope_signal + evidence_demand + risk_appetite + override-axis detection. Auto-classifier handles 5 system patterns inline (40-55% LLM cycle savings).
-- Phase 4: twin agent - persona + principles + override exemplars + topical exemplars; few-shot retrieval; standard answer format.
-- Phase 5: release-manager loop integration + standalone repo + global cross-project install + config split + Path A twin invocation.
-- Phase 5.5 (v0.5.0): twin gates expansion (`on_scope_cut` + `on_mid_release_scope_add` + `on_backlog_add`); CLAUDE.md tightening + chunk-breadcrumb pattern; auto-promote homes wired (`weighting.auto_promote.enabled`).
-- Phase 5.5 (v0.6.0): marketplace UI install (`/plugin marketplace add Magerash/HAE` works); override-rate drift signal in `/hae:status`; cost skill (`/hae:cost`) with schema-additive token fields + Opus/Sonnet/Haiku 2026 pricing.
-- v0.6.1: MIT LICENSE.
-- v0.6.2: capture hooks async (zero user-visible block).
+- Live capture via `UserPromptSubmit` + `Stop` hooks. Async since v0.6.2 (no user-visible block). 25 redact regexes for secrets + PII. Path hashing per privacy policy. Per-session JSONL writes (no contention).
+- Operator profile: PAEI (Adizes 4 roles) + HEXACO Brief (6 personality factors) + 8 custom decision-style items + free-form principles. Persona auto-generated and behaviorally calibrated against captured records.
+- Classifier: raw -> structured 8-category taxonomy (FEATURE / BUG / RESEARCH / RELEASE_OPS / CODE_QA / REFACTOR / META / PLANNING) plus scope_signal, evidence_demand, risk_appetite, override-axis detection. Auto-classifier handles 5 system patterns inline (~40-55% LLM cycle savings).
+- Twin agent: loads persona + principles + override exemplars + topical exemplars; few-shot retrieval ranked by keyword overlap times project_weight; standard answer format (Twin take / Why / Risk / Confidence / sign-off).
+- Release-manager loop integration with twin gates (`on_scope_cut`, `on_mid_release_scope_add`, `on_backlog_add`); standalone repo; global cross-project install; config split (defaults + user overrides).
+- Auto-promote home projects (`weighting.auto_promote.enabled`) wired through classifier post-batch trigger + status display + audit log.
+- Marketplace UI install: `/plugin marketplace add Magerash/HAE` + `/plugin install hae@hae` works end-to-end (v0.6.4 fixed manifest schema validation).
+- Override-rate drift signal in `/hae:status`: trailing 4-week sparkline overall + per-axis as personal Anthropic-change detector.
+- Cost skill (`/hae:cost`): weekly token spend per project + model tier with Opus/Sonnet/Haiku 2026 pricing. Schema-additive (non-breaking) `tokens_in/out/cache_read/cache_create/model` fields. Privacy-preserving slim StopTokens record when `include_response=false`.
+- MIT LICENSE.
+- CLAUDE.md tightening + chunk-breadcrumb pattern; documentation chunks under `docs/chunks/` for progressive disclosure.
 
 **Active (v0.7.0):**
 
-- `/hae:export` skill (CSV + markdown summary by project; data-portability + anti-lock-in messaging).
-- v1.0 OSS publish completion (CONTRIBUTING.md, marketplace listing submission, README polish for external audience).
-- `report.ps1` formatter rewrite (TOC + section anchors + takeaway blockquotes + trend tracking + blind-spot interpretation).
-- Repetition-candidate classifier (prompts typed 10+ times surface as CLAUDE.md/hook promotion candidates).
+- `/hae:export` skill: CSV + markdown summary by project for data portability and anti-lock-in messaging.
+- v1.0 OSS publish completion: CONTRIBUTING.md, marketplace listing submission, README polish for external audience.
+- `report.ps1` formatter rewrite: TOC + section anchors + takeaway blockquotes + trend tracking + blind-spot interpretation.
+- Repetition-candidate classifier: surface prompts typed 10+ times as CLAUDE.md or hook promotion candidates.
 
 **Planned (v0.8.0+):**
 
-- Phase 6: cross-project intelligence - twin few-shot retrieval upgrade to semantic embeddings (`fastembed` / all-MiniLM-L6-v2 ONNX, local, ~5ms query); exemplar staleness detection.
-- PostToolUse hook capture + `/hae:trace <session-id>` for session audit trail.
-- Cross-platform install (macOS + Linux). Bash hooks or Go binary candidate.
-- Codex CLI integration (depends on Codex hook contract).
-- Phase 6 dashboards: entity rollups, drift detection, project velocity.
+- Twin few-shot retrieval upgrade to semantic embeddings (`fastembed` + all-MiniLM-L6-v2 ONNX, local, ~5ms query) plus exemplar staleness detection.
+- `PostToolUse` hook capture + `/hae:trace <session-id>` skill for session audit trail.
+- Cross-platform install (macOS + Linux): bash hooks or Go binary port.
+- Codex CLI integration (depends on Codex hook contract availability).
+- Cross-project intelligence dashboards: entity rollups, drift detection, project velocity.
 
 **RICE backlog + roadmap:** `docs/release/rice_backlog.md`, `docs/release/roadmap.md`, `docs/release/current_scope.md`.
 
